@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../layout/Sidebar';
-import { Link, useNavigate } from "react-router-dom"; // ✅ import useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaEye, FaCommentDots } from "react-icons/fa";
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
-  const navigate = useNavigate(); // ✅ initialize navigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get("http://localhost:3001/api/courses")
@@ -47,10 +48,10 @@ export default function Courses() {
           {courses.map((course) => (
             <div
               key={course._id}
-              onClick={() => navigate(`/courses/edit/${course._id}`)} // ✅ go to edit page
-              className="bg-white shadow-md rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition"
+              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition"
             >
-              <div className="h-40 bg-gray-200">
+              {/* Cover */}
+              <div className="h-40 bg-gray-200 cursor-pointer" onClick={() => navigate(`/courses/edit/${course._id}`)}>
                 {course.coverImage ? (
                   <img
                     src={`http://localhost:3001${course.coverImage}`}
@@ -63,12 +64,24 @@ export default function Courses() {
                   </div>
                 )}
               </div>
+
+              {/* Info */}
               <div className="p-4">
                 <h3 className="text-lg font-bold">{course.title}</h3>
                 <p className="text-gray-600 text-sm line-clamp-2">{course.description}</p>
                 <div className="text-sm mt-2 font-medium">
                   Plan: {course.pricingPlan}
                 </div>
+              </div>
+
+              {/* Icon Bar */}
+              <div className="border-t flex justify-between items-center px-4 py-2 text-xl">
+                <FaInfoCircle className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaWrench className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaPen className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaUsers className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaEye className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaCommentDots className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
               </div>
             </div>
           ))}
