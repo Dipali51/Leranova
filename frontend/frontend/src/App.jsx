@@ -9,6 +9,7 @@ import Home from "./assets/pages/Home";
 import CreateCourse from './assets/pages/CreateCourse';
 import CourseContent from './assets/pages/CourseContent';
 import AddCourseContent from './assets/pages/CourseContent';
+import CoursePreview from './assets/pages/CoursePreview';
 
 function App() {
   const [count, setCount] = useState(0);
@@ -25,6 +26,7 @@ function App() {
         <Route path="/courses/edit/:id" element={<CreateCourse />} /> {/* ✅ fixed */}
         <Route path="/add-content" element={<AddCourseContent />} />
         <Route path="/course-content/:courseId" element={<CourseContent />} />
+        <Route path="/courses/preview/:id" element={<CoursePreview />} />
       </Routes>
     </Router>
   );

@@ -80,7 +80,10 @@ export default function Courses() {
                 <FaWrench className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
                 <FaPen className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
                 <FaUsers className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
-                <FaEye className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaEye
+                onClick={() => navigate(`/courses/preview/${course._id}`)}
+                className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                />
                 <FaCommentDots className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
               </div>
             </div>
