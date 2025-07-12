@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../layout/Sidebar";
 
 export default function CreateCourse() {
@@ -14,6 +14,27 @@ export default function CreateCourse() {
   const [coverPreview, setCoverPreview] = useState("");
 
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  useEffect(() => {
+    if (id) {
+      axios.get(`http://localhost:3001/api/course/${id}`)
+        .then((res) => {
+          const course = res.data;
+          setTitle(course.title);
+          setDescription(course.description);
+          setPlan(course.pricingPlan);
+          setTotalPrice(course.totalPrice);
+          setDiscountedPrice(course.discountedPrice);
+          if (course.coverImage) {
+            setCoverPreview(`http://localhost:3001${course.coverImage}`);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch course:", err);
+        });
+    }
+  }, [id]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -31,7 +52,7 @@ export default function CreateCourse() {
   const handleNext = async (e) => {
     e.preventDefault();
 
-    if (!title || !description || !coverImage) {
+    if (!title || !description || (!coverImage && !id)) {
       alert("Please fill all required fields including cover image.");
       return;
     }
@@ -48,18 +69,21 @@ export default function CreateCourse() {
       formData.append("pricingPlan", plan);
       formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
-      formData.append("coverImage", coverImage); // ✅ send file as-is
+      if (coverImage) formData.append("coverImage", coverImage);
 
-      const response = await axios.post("http://localhost:3001/api/create", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      let response;
+      if (id) {
+        response = await axios.put(`http://localhost:3001/api/course/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        response = await axios.post("http://localhost:3001/api/create", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
-      console.log("✅ Course saved:", response.data);
       alert("✅ Course saved successfully!");
-
-      const courseId = response.data._id;
+      const courseId = response.data._id || id;
       navigate(`/course-content/${courseId}`);
     } catch (error) {
       console.error("❌ Error saving course:", error);
@@ -75,24 +99,26 @@ export default function CreateCourse() {
         encType="multipart/form-data"
         className="flex-1 bg-white min-h-screen"
       >
-        {/* Top Navbar */}
         <div className="flex justify-between items-center p-14 border-b shadow-sm sticky top-0 bg-white z-20">
           <div className="flex items-center space-x-3">
             <FaArrowLeft
               className="text-gray-700 cursor-pointer"
               onClick={() => navigate(-1)}
             />
-            <h2 className="text-xl font-semibold">Create a course</h2>
+            <h2 className="text-xl font-semibold">
+              {id ? "Edit Course" : "Create a course"}
+            </h2>
           </div>
+          {!id && (
           <button
             type="submit"
             className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
           >
             Next
           </button>
+          )}
         </div>
 
-        {/* Form Content */}
         <div className="p-8">
           <label className="block font-medium mb-1">Title *</label>
           <input
@@ -131,7 +157,6 @@ export default function CreateCourse() {
             className="border p-2 w-full"
           />
 
-          {/* Pricing */}
           <label className="block font-medium text-lg mb-2 mt-6">Set pricing</label>
           <div className="space-y-4">
             <label className="block border p-4 rounded-lg cursor-pointer">
@@ -211,40 +236,3 @@ export default function CreateCourse() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

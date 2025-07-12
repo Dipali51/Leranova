@@ -58,6 +58,49 @@ exports.getCourseById = async (req, res) => {
   }
 };
 
+exports.updateCourse = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const {
+      title,
+      description,
+      pricingPlan,
+      totalPrice,
+      discountedPrice,
+    } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Handle new cover image if provided
+    if (req.files && req.files.coverImage && req.files.coverImage[0]) {
+      // Optional: delete old image file if needed
+      if (course.coverImage) {
+        const oldPath = path.join(__dirname, "..", "uploads", "images", path.basename(course.coverImage));
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+      course.coverImage = `/uploads/images/${req.files.coverImage[0].filename}`;
+    }
+
+    // Update fields
+    course.title = title || course.title;
+    course.description = description || course.description;
+    course.pricingPlan = pricingPlan || course.pricingPlan;
+    course.totalPrice = pricingPlan === "one-time" ? totalPrice : 0;
+    course.discountedPrice = pricingPlan === "one-time" ? discountedPrice : 0;
+
+    const updatedCourse = await course.save();
+    res.json(updatedCourse);
+  } catch (error) {
+    console.error("❌ Error updating course:", error);
+    res.status(500).json({ error: "Failed to update course" });
+  }
+};
+
 // ✅ Upload and link PDF to course
 exports.uploadPdfToCourse = async (req, res) => {
   try {

@@ -68,6 +68,10 @@ router.get("/course/:id", async (req, res) => {
   }
 });
 
+router.put("/course/:id", upload.fields([
+  { name: "coverImage", maxCount: 1 },
+]), courseController.updateCourse);
+
 // ✅ Create course (merged route for coverImage and PDFfile)
 router.post(
   "/create",

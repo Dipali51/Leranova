@@ -51,7 +51,7 @@ export default function Courses() {
               className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition"
             >
               {/* Cover */}
-              <div className="h-40 bg-gray-200 cursor-pointer" onClick={() => navigate(`/courses/edit/${course._id}`)}>
+              <div className="h-40 bg-gray-200 cursor-pointer" onClick={() => navigate(`/courses/edit/${course._id}`)} >
                 {course.coverImage ? (
                   <img
                     src={`http://localhost:3001${course.coverImage}`}
