@@ -6,20 +6,22 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate(); // to redirect after successful registration
+  const [role, setRole] = useState('student'); // 👈 default role = student
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post('http://localhost:3001/api/Signup', {
+      const res = await axios.post('http://localhost:3001/api/signup', {
         username: name,
         email,
-        password
+        password,
+        role, // 👈 send role also
       });
 
       alert(res.data.message || 'Registration successful');
-      navigate('/login'); // Redirect to login page
+      navigate('/login');
     } catch (err) {
       console.error('Register error:', err);
       alert(err.response?.data?.error || 'Registration failed');
@@ -57,6 +59,17 @@ export default function SignUp() {
           className="w-full mb-6 p-2 border border-gray-300 rounded"
           required
         />
+
+        {/* 👇 Role Dropdown */}
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="w-full mb-6 p-2 border border-gray-300 rounded"
+          required
+        >
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
 
         <button
           type="submit"

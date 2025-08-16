@@ -5,6 +5,16 @@ import axios from 'axios';
 import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaEye, FaCommentDots } from "react-icons/fa";
 
 export default function Courses() {
+  // ✅ define role state properly
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    // Get role from localStorage (or API later)
+    const userRole = localStorage.getItem("role"); // e.g., "teacher" or "student"
+    setRole(userRole);
+  }, []);
+
+
   const [courses, setCourses] = useState([]);
   const navigate = useNavigate();
 
@@ -22,11 +32,13 @@ export default function Courses() {
         {/* Topbar */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">Courses ({courses.length})</h2>
-          <Link to="/courses/create">
+          {role === "teacher" && (
+        <Link to="/courses/create">
             <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
               + Create Course
             </button>
           </Link>
+      )}
         </div>
 
         {/* Filter and Search */}
