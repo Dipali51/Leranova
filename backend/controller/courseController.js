@@ -1,4 +1,4 @@
-const Course = require("../models/course");
+const Courses = require("../models/course");
 const path = require("path");
 
 
@@ -10,10 +10,10 @@ exports.createCourse = async (req, res) => {
     // ✅ Handle cover image upload
     let coverPath = "";
     if (req.files && req.files.coverImage && req.files.coverImage[0]) {
-  console.log("📸 Uploaded Cover Image:", req.files.coverImage[0].filename);
-  coverPath = "/uploads/images/" + req.files.coverImage[0].filename;
-}
-  
+      console.log("📸 Uploaded Cover Image:", req.files.coverImage[0].filename);
+      coverPath = "/uploads/images/" + req.files.coverImage[0].filename;
+    }
+
     const newCourse = new Courses({
       title: req.body.title,
       description: req.body.description,
@@ -38,7 +38,7 @@ exports.createCourse = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ createdBy: req.user.id });
+    const courses = await Courses.find({ createdBy: req.user.id });
     res.status(200).json(courses);
   } catch (err) {
     console.error("❌ Error fetching courses:", err);
@@ -111,7 +111,7 @@ exports.uploadPdfToCourse = async (req, res) => {
     if (!req.file || !courseId) {
       return res.status(400).json({ error: "Missing PDF file or courseId" });
     }
-bchvbcxhvch
+    bchvbcxhvch
     const course = await Courses.findById(courseId);
     if (!course) {
       return res.status(404).json({ error: "Course not found" });
@@ -119,16 +119,16 @@ bchvbcxhvch
 
     const pdfPath = "/uploads/pdfs/" + req.file.filename;
 
-   
+
     course.pdfs.push({ filePath: pdfPath });
     await course.save();
 
     res.status(200).json({
-  message: "✅ PDF uploaded and attached to course",
-  pdfPath: pdfPath,
-  filePath: pdfPath,
-  course,
-});
+      message: "✅ PDF uploaded and attached to course",
+      pdfPath: pdfPath,
+      filePath: pdfPath,
+      course,
+    });
   } catch (err) {
     console.error("❌ Error uploading PDF:", err);
     res.status(500).json({ error: "Internal server error" });
