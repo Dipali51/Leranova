@@ -33,7 +33,13 @@ pdfs: [
     title: String,
     url: String,
   }
-]
+],
+
+createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // ya "Teacher" agar alag model hai
+    required: true,
+  },
 
 }, { timestamps: true });
 

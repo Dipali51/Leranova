@@ -1,5 +1,6 @@
-const Courses = require("../models/course");
+const Course = require("../models/course");
 const path = require("path");
+
 
 // CREATE a new course
 exports.createCourse = async (req, res) => {
@@ -20,7 +21,8 @@ exports.createCourse = async (req, res) => {
       totalPrice: req.body.totalPrice,
       discountedPrice: req.body.discountedPrice,
       coverImage: coverPath,
-      pdfs: [] // Initialize with empty array
+      pdfs: [],
+      createdBy: req.user.id, // Initialize with empty array
     });
 
     // ✅ Save to MongoDB
@@ -36,7 +38,7 @@ exports.createCourse = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await Courses.find().sort({ createdAt: -1 });
+    const courses = await Course.find({ createdBy: req.user.id });
     res.status(200).json(courses);
   } catch (err) {
     console.error("❌ Error fetching courses:", err);

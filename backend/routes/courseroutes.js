@@ -3,6 +3,7 @@ const router = express.Router();
 const upload = require("../middleware/upload");
 const courseController = require("../controller/courseController");
 const Course = require("../models/course"); // ⬅️ Import Course model
+const auth = require("../middleware/auth");
 
 // ✅ Upload Cover Image
 router.post("/upload-cover", upload.single("coverImage"), (req, res) => {
@@ -75,6 +76,7 @@ router.put("/course/:id", upload.fields([
 // ✅ Create course (merged route for coverImage and PDFfile)
 router.post(
   "/create",
+  auth,
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "PDFfile", maxCount: 1 },
@@ -83,6 +85,6 @@ router.post(
 );
 
 // ✅ Get all courses
-router.get("/courses", courseController.getAllCourses);
+router.get("/courses", auth, courseController.getAllCourses);
 
 module.exports = router;

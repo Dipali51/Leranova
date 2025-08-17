@@ -18,7 +18,8 @@ export default function CreateCourse() {
 
   useEffect(() => {
     if (id) {
-      axios.get(`http://localhost:3001/api/course/${id}`)
+      axios
+        .get(`http://localhost:3001/api/course/${id}`)
         .then((res) => {
           const course = res.data;
           setTitle(course.title);
@@ -71,15 +72,31 @@ export default function CreateCourse() {
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
       if (coverImage) formData.append("coverImage", coverImage);
 
+      const token = localStorage.getItem("token"); // 👈 fetch token
+
       let response;
       if (id) {
-        response = await axios.put(`http://localhost:3001/api/course/${id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        response = await axios.put(
+          `http://localhost:3001/api/course/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`, // 👈 attach token
+            },
+          }
+        );
       } else {
-        response = await axios.post("http://localhost:3001/api/create", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        response = await axios.post(
+          "http://localhost:3001/api/create",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`, // 👈 attach token
+            },
+          }
+        );
       }
 
       alert("✅ Course saved successfully!");
@@ -110,12 +127,12 @@ export default function CreateCourse() {
             </h2>
           </div>
           {!id && (
-          <button
-            type="submit"
-            className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
-          >
-            Next
-          </button>
+            <button
+              type="submit"
+              className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
+            >
+              Next
+            </button>
           )}
         </div>
 

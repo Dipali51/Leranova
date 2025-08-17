@@ -18,11 +18,30 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get("http://localhost:3001/api/courses")
-      .then(res => setCourses(res.data))
-      .catch(err => console.error("Error fetching courses", err));
-  }, []);
+ useEffect(() => {
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem("token"); // ✅ get token
+
+      const res = await axios.get("http://localhost:3001/api/courses", {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ send token
+        },
+      });
+
+      setCourses(res.data);
+    } catch (err) {
+      console.error("Error fetching courses", err);
+      if (err.response && err.response.status === 401) {
+        alert("Session expired. Please login again.");
+        navigate("/login");
+      }
+    }
+  };
+
+  fetchCourses();
+}, [navigate]);
+
 
   return (
     <div className="flex">
