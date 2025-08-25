@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LandingPage from './pages/Landingpage'; // ✅ import your landing page component
+import LandingPage from './pages/Landingpage'; 
 
 export default function Login() {
   const [email, setEmail] = useState('');

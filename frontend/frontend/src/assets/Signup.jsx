@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LandingPage from './pages/Landingpage';
 
 export default function SignUp() {
   const [name, setName] = useState('');
@@ -29,6 +30,15 @@ export default function SignUp() {
   };
 
   return (
+    <div className="relative h-screen w-screen">
+          {/* Background Landing Page */}
+    <div className="absolute inset-0 z-0">
+            <LandingPage />
+    </div>
+    
+          {/* Overlay with blur */}
+    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center">
+    
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-bold mb-6 text-center text-indigo-700">Register</h2>
 
@@ -85,6 +95,8 @@ export default function SignUp() {
           Sign in
         </Link>
       </p>
+    </div>
+    </div>
     </div>
   );
 }

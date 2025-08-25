@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "../../layout/Navbar";
 import Learnovaimg from "../../image/Learnova.jpg";
+import { Link } from "react-router-dom";
 
 export default function Landingpage() {
   return (

@@ -25,7 +25,6 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/courses" element={<Courses />} />
 
-        {/* ✅ Protected Routes for Teacher Only */}
         <Route
           path="/courses/create"
           element={

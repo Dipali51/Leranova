@@ -116,7 +116,7 @@ export default function CreateCourse() {
         encType="multipart/form-data"
         className="flex-1 bg-white min-h-screen"
       >
-        <div className="flex justify-between items-center p-14 border-b shadow-sm sticky top-0 bg-white z-20">
+        <div className="flex justify-between items-center p-20 border-b shadow-sm sticky top-0 bg-white z-20">
           <div className="flex items-center space-x-3">
             <FaArrowLeft
               className="text-gray-700 cursor-pointer"
