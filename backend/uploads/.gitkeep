@@ -1,0 +1,2 @@
+# This file ensures the uploads directory exists for the application to work properly
+# The actual uploaded files are ignored by .gitignore but the folder structure is preserved
