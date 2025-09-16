@@ -1,5 +1,6 @@
 const Courses = require("../models/course");
 const path = require("path");
+const fs = require("fs");
 
 
 // CREATE a new course
@@ -71,7 +72,7 @@ exports.updateCourse = async (req, res) => {
       discountedPrice,
     } = req.body;
 
-    const course = await Course.findById(courseId);
+    const course = await Courses.findById(courseId);
     if (!course) {
       return res.status(404).json({ error: "Course not found" });
     }

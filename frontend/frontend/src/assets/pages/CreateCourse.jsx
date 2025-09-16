@@ -108,6 +108,46 @@ export default function CreateCourse() {
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (!title || !description) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    if (plan === "one-time" && (!totalPrice || !discountedPrice)) {
+      alert("Please enter total and discounted price for one-time plan.");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("pricingPlan", plan);
+      formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
+      formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
+      if (coverImage) formData.append("coverImage", coverImage);
+
+      const token = localStorage.getItem("token");
+
+      await axios.put(
+        `http://localhost:3001/api/course/${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("✅ Course updated successfully!");
+    } catch (error) {
+      console.error("❌ Error updating course:", error);
+      alert("Failed to update course.");
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar />
@@ -126,14 +166,25 @@ export default function CreateCourse() {
               {id ? "Edit Course" : "Create a course"}
             </h2>
           </div>
-          {!id && (
-            <button
-              type="submit"
-              className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
-            >
-              Next
-            </button>
-          )}
+          <div className="flex space-x-3">
+            {id && (
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+              >
+                Save Changes
+              </button>
+            )}
+            {!id && (
+              <button
+                type="submit"
+                className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="p-8">
