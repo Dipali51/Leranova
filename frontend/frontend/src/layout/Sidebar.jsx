@@ -62,7 +62,6 @@ export default function Sidebar() {
           <ul className="ml-8 space-y-5 text-black-500">
             <li><Link to="/courses" className="hover:text-indigo-600">Courses</Link></li>
             <li><Link to="/packages" className="hover:text-indigo-600">Packages</Link></li>
-            <li><Link to="/membership" className="hover:text-indigo-600">Membership</Link></li>
             <li><Link to="/webinar" className="hover:text-indigo-600">Webinars</Link></li>
             <li><Link to="/digital-product" className="hover:text-indigo-600">Digital products</Link></li>
             <li><Link to="/telegram-communities" className="hover:text-indigo-600">Telegram communities</Link></li>

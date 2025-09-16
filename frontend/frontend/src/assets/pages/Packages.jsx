@@ -28,8 +28,20 @@ export default function Packages() {
     }, []);
 
     const fetchPackages = () => {
-        // Start with empty packages - teacher will create their own
-        setPackages([]);
+        // Get packages from localStorage to persist them
+        const storedPackages = localStorage.getItem('userPackages');
+        if (storedPackages) {
+            try {
+                const parsedPackages = JSON.parse(storedPackages);
+                setPackages(parsedPackages);
+                console.log("✅ Loaded", parsedPackages.length, "packages from localStorage");
+            } catch (error) {
+                console.error("Error parsing stored packages:", error);
+                setPackages([]);
+            }
+        } else {
+            setPackages([]);
+        }
 
         // TODO: When backend package API is ready, fetch real packages here:
         /*
@@ -135,7 +147,13 @@ export default function Packages() {
             createdAt: new Date().toISOString()
         };
 
-        setPackages([...packages, createdPackage]);
+        const updatedPackages = [...packages, createdPackage];
+        setPackages(updatedPackages);
+
+        // Save to localStorage to persist packages
+        localStorage.setItem('userPackages', JSON.stringify(updatedPackages));
+        console.log("✅ Package saved to localStorage");
+
         setShowCreateModal(false);
         setNewPackage({
             title: '',
@@ -154,7 +172,13 @@ export default function Packages() {
             return;
         }
 
-        setPackages(packages.filter(pkg => pkg._id !== packageId));
+        const updatedPackages = packages.filter(pkg => pkg._id !== packageId);
+        setPackages(updatedPackages);
+
+        // Update localStorage after deletion
+        localStorage.setItem('userPackages', JSON.stringify(updatedPackages));
+        console.log("✅ Package deleted and localStorage updated");
+
         alert("✅ Package deleted successfully!");
     };
 
