@@ -28,25 +28,49 @@ export default function Packages() {
     }, []);
 
     const fetchPackages = () => {
-        // Get packages from localStorage to persist them
-        const storedPackages = localStorage.getItem('userPackages');
+        // Get current user's ID from token
+        const token = localStorage.getItem("token");
+        let userId = null;
+
+        if (token) {
+            try {
+                // Decode JWT token to get user ID (basic decode, not secure but works for client)
+                const base64Payload = token.split('.')[1];
+                const payload = JSON.parse(atob(base64Payload));
+                userId = payload.id;
+                console.log("📋 Current user ID:", userId);
+            } catch (error) {
+                console.error("Error decoding token:", error);
+            }
+        }
+
+        if (!userId) {
+            console.log("❌ No user ID found, cannot load packages");
+            setPackages([]);
+            return;
+        }
+
+        // Get packages for this specific user from localStorage
+        const userPackagesKey = `userPackages_${userId}`;
+        const storedPackages = localStorage.getItem(userPackagesKey);
+
         if (storedPackages) {
             try {
                 const parsedPackages = JSON.parse(storedPackages);
                 setPackages(parsedPackages);
-                console.log("✅ Loaded", parsedPackages.length, "packages from localStorage");
+                console.log("✅ Loaded", parsedPackages.length, "packages for user", userId);
             } catch (error) {
                 console.error("Error parsing stored packages:", error);
                 setPackages([]);
             }
         } else {
             setPackages([]);
+            console.log("📦 No packages found for user", userId);
         }
 
         // TODO: When backend package API is ready, fetch real packages here:
         /*
         try {
-          const token = localStorage.getItem("token");
           const response = await axios.get("http://localhost:3001/api/packages", {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -134,6 +158,27 @@ export default function Packages() {
         const totalCoursesPrice = selectedCourseDetails.reduce((sum, course) => sum + course.price, 0);
         const savings = parseInt(newPackage.totalPrice) - parseInt(newPackage.discountedPrice);
 
+        // Get current user ID
+        const token = localStorage.getItem("token");
+        let userId = null;
+
+        if (token) {
+            try {
+                const base64Payload = token.split('.')[1];
+                const payload = JSON.parse(atob(base64Payload));
+                userId = payload.id;
+            } catch (error) {
+                console.error("Error decoding token:", error);
+                alert("Error: Unable to identify user. Please login again.");
+                return;
+            }
+        }
+
+        if (!userId) {
+            alert("Error: Please login to create packages.");
+            return;
+        }
+
         const createdPackage = {
             _id: Date.now().toString(),
             title: newPackage.title,
@@ -144,15 +189,17 @@ export default function Packages() {
             courses: selectedCourseDetails,
             totalCoursesPrice: totalCoursesPrice,
             savings: savings,
+            createdBy: userId, // Add creator ID
             createdAt: new Date().toISOString()
         };
 
         const updatedPackages = [...packages, createdPackage];
         setPackages(updatedPackages);
 
-        // Save to localStorage to persist packages
-        localStorage.setItem('userPackages', JSON.stringify(updatedPackages));
-        console.log("✅ Package saved to localStorage");
+        // Save to localStorage with user-specific key
+        const userPackagesKey = `userPackages_${userId}`;
+        localStorage.setItem(userPackagesKey, JSON.stringify(updatedPackages));
+        console.log("✅ Package saved for user", userId);
 
         setShowCreateModal(false);
         setNewPackage({
@@ -172,12 +219,29 @@ export default function Packages() {
             return;
         }
 
+        // Get current user ID
+        const token = localStorage.getItem("token");
+        let userId = null;
+
+        if (token) {
+            try {
+                const base64Payload = token.split('.')[1];
+                const payload = JSON.parse(atob(base64Payload));
+                userId = payload.id;
+            } catch (error) {
+                console.error("Error decoding token:", error);
+            }
+        }
+
         const updatedPackages = packages.filter(pkg => pkg._id !== packageId);
         setPackages(updatedPackages);
 
-        // Update localStorage after deletion
-        localStorage.setItem('userPackages', JSON.stringify(updatedPackages));
-        console.log("✅ Package deleted and localStorage updated");
+        // Update localStorage with user-specific key
+        if (userId) {
+            const userPackagesKey = `userPackages_${userId}`;
+            localStorage.setItem(userPackagesKey, JSON.stringify(updatedPackages));
+            console.log("✅ Package deleted for user", userId);
+        }
 
         alert("✅ Package deleted successfully!");
     };
@@ -316,16 +380,41 @@ export default function Packages() {
                                 {role === "teacher" && (
                                     <div className="flex justify-between items-center">
                                         <div className="flex space-x-3 text-gray-600">
-                                            <FaInfoCircle className="cursor-pointer hover:text-purple-600 transition" />
-                                            <FaWrench className="cursor-pointer hover:text-purple-600 transition" />
-                                            <FaPen className="cursor-pointer hover:text-purple-600 transition" />
-                                            <FaUsers className="cursor-pointer hover:text-purple-600 transition" />
-                                            <FaEye className="cursor-pointer hover:text-purple-600 transition" />
-                                            <FaCommentDots className="cursor-pointer hover:text-purple-600 transition" />
+                                            <FaInfoCircle
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Package Info:\nTitle: ${pkg.title}\nDescription: ${pkg.description}\nDuration: ${pkg.duration}\nCourses: ${pkg.courses.length}\nCreated: ${new Date(pkg.createdAt).toLocaleDateString()}`)}
+                                                title="Package Information"
+                                            />
+                                            <FaWrench
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Edit Package:\nPackage: ${pkg.title}\nFeature coming soon - Edit package details, pricing, and course selection.`)}
+                                                title="Edit Package"
+                                            />
+                                            <FaPen
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Edit Content:\nPackage: ${pkg.title}\nFeature coming soon - Edit package description and course content.`)}
+                                                title="Edit Content"
+                                            />
+                                            <FaUsers
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Package Enrollment:\nPackage: ${pkg.title}\nEnrolled Students: ${pkg.enrolledStudents || 0}\nTotal Revenue: ₹${(pkg.enrolledStudents || 0) * pkg.discountedPrice}`)}
+                                                title="View Students"
+                                            />
+                                            <FaEye
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Package Preview:\nTitle: ${pkg.title}\nPrice: ₹${pkg.discountedPrice} (Save ₹${pkg.savings})\nCourses: ${pkg.courses.map(c => c.title).join(', ')}`)}
+                                                title="Preview Package"
+                                            />
+                                            <FaCommentDots
+                                                className="cursor-pointer hover:text-purple-600 transition"
+                                                onClick={() => alert(`Package Feedback:\nPackage: ${pkg.title}\nRating: ${pkg.rating || 'No ratings yet'}\nReviews: ${pkg.reviewCount || 0} reviews\nComments: ${pkg.commentCount || 0} comments`)}
+                                                title="View Comments & Reviews"
+                                            />
                                         </div>
                                         <FaTrash
                                             className="text-red-500 cursor-pointer hover:text-red-700 transition"
                                             onClick={() => handleDeletePackage(pkg._id)}
+                                            title="Delete Package"
                                         />
                                     </div>
                                 )}

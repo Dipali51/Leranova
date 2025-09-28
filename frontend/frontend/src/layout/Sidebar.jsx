@@ -63,8 +63,6 @@ export default function Sidebar() {
             <li><Link to="/courses" className="hover:text-indigo-600">Courses</Link></li>
             <li><Link to="/packages" className="hover:text-indigo-600">Packages</Link></li>
             <li><Link to="/webinar" className="hover:text-indigo-600">Webinars</Link></li>
-            <li><Link to="/digital-product" className="hover:text-indigo-600">Digital products</Link></li>
-            <li><Link to="/telegram-communities" className="hover:text-indigo-600">Telegram communities</Link></li>
           </ul>
         )}
 

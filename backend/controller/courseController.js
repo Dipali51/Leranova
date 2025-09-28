@@ -112,7 +112,6 @@ exports.uploadPdfToCourse = async (req, res) => {
     if (!req.file || !courseId) {
       return res.status(400).json({ error: "Missing PDF file or courseId" });
     }
-    bchvbcxhvch
     const course = await Courses.findById(courseId);
     if (!course) {
       return res.status(404).json({ error: "Course not found" });

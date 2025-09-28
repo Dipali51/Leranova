@@ -6,6 +6,8 @@ import Signup from './assets/Signup';
 import Signin from './assets/Login';
 import Courses from './assets/pages/Courses';
 import Packages from './assets/pages/Packages';
+import Webinar from './assets/pages/Webinar';
+import CreateWebinar from './assets/pages/CreateWebinar';
 import Home from "./assets/pages/Home";
 import CreateCourse from './assets/pages/CreateCourse';
 import CourseContent from './assets/pages/CourseContent';
@@ -15,7 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
 
 function ConditionalNavbar() {
   const location = useLocation();
-  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview'];
+  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview', '/webinar', '/webinars', '/webinar/create'];
 
   // Check if current route should hide navbar
   const shouldHideNavbar = hideNavbarRoutes.some(route =>
@@ -23,9 +25,7 @@ function ConditionalNavbar() {
   );
 
   return !shouldHideNavbar ? <Navbar /> : null;
-}
-
-function App() {
+} function App() {
   return (
     <Router>
       <ConditionalNavbar />
@@ -36,6 +36,16 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/packages" element={<Packages />} />
+        <Route path="/webinar" element={<Webinar />} />
+
+        <Route
+          path="/webinar/create"
+          element={
+            <ProtectedRoute role="teacher">
+              <CreateWebinar />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/courses/create"

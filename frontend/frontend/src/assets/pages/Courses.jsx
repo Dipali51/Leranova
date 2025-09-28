@@ -18,29 +18,29 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const navigate = useNavigate();
 
- useEffect(() => {
-  const fetchCourses = async () => {
-    try {
-      const token = localStorage.getItem("token"); // ✅ get token
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem("token"); // ✅ get token
 
-      const res = await axios.get("http://localhost:3001/api/courses", {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ send token
-        },
-      });
+        const res = await axios.get("http://localhost:3001/api/courses", {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ send token
+          },
+        });
 
-      setCourses(res.data);
-    } catch (err) {
-      console.error("Error fetching courses", err);
-      if (err.response && err.response.status === 401) {
-        alert("Session expired. Please login again.");
-        navigate("/login");
+        setCourses(res.data);
+      } catch (err) {
+        console.error("Error fetching courses", err);
+        if (err.response && err.response.status === 401) {
+          alert("Session expired. Please login again.");
+          navigate("/login");
+        }
       }
-    }
-  };
+    };
 
-  fetchCourses();
-}, [navigate]);
+    fetchCourses();
+  }, [navigate]);
 
 
   return (
@@ -52,12 +52,12 @@ export default function Courses() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">Courses ({courses.length})</h2>
           {role === "teacher" && (
-        <Link to="/courses/create">
-            <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-              + Create Course
-            </button>
-          </Link>
-      )}
+            <Link to="/courses/create">
+              <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                + Create Course
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Filter and Search */}
@@ -107,15 +107,36 @@ export default function Courses() {
 
               {/* Icon Bar */}
               <div className="border-t flex justify-between items-center px-4 py-2 text-xl">
-                <FaInfoCircle className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
-                <FaWrench className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
-                <FaPen className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
-                <FaUsers className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
-                <FaEye
-                onClick={() => navigate(`/courses/preview/${course._id}`)}
-                className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                <FaInfoCircle
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  onClick={() => alert(`Course Info:\nTitle: ${course.title}\nDescription: ${course.description}\nPricing: ${course.pricingPlan}\nCreated: ${new Date(course.createdAt).toLocaleDateString()}`)}
+                  title="Course Information"
                 />
-                <FaCommentDots className="text-gray-600 cursor-pointer hover:text-purple-600 transition" />
+                <FaWrench
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  onClick={() => navigate(`/courses/edit/${course._id}`)}
+                  title="Edit Course"
+                />
+                <FaPen
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  onClick={() => navigate(`/course-content/${course._id}`)}
+                  title="Edit Content"
+                />
+                <FaUsers
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  onClick={() => alert(`Course Enrollment:\nCourse: ${course.title}\nStudents Enrolled: ${course.enrolledStudents || 0}\nCapacity: ${course.maxStudents || 'Unlimited'}`)}
+                  title="View Students"
+                />
+                <FaEye
+                  onClick={() => navigate(`/courses/preview/${course._id}`)}
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  title="Preview Course"
+                />
+                <FaCommentDots
+                  className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
+                  onClick={() => alert(`Course Feedback:\nCourse: ${course.title}\nRating: ${course.rating || 'No ratings yet'}\nReviews: ${course.reviewCount || 0} reviews\nComments: ${course.commentCount || 0} comments`)}
+                  title="View Comments & Reviews"
+                />
               </div>
             </div>
           ))}
