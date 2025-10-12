@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Sidebar() {
   const [showProducts, setShowProducts] = useState(true);
@@ -7,6 +7,8 @@ export default function Sidebar() {
   const [showUsers, setShowUsers] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [role, setRole] = useState(null);
+  const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Get user role from localStorage (or backend)
   useEffect(() => {
@@ -29,8 +31,17 @@ export default function Sidebar() {
   // Only show if role === teacher
   if (role !== "teacher") return null;
 
+  function handleLogout() {
+    // clear auth and redirect
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('name');
+    setShowLogoutConfirm(false);
+    navigate('/login');
+  }
+
   return (
-    <div className="w-64 min-h-screen border-r border-gray-200 p-4 text-sm text-gray-800">
+    <div className="w-64 min-h-screen border-r border-gray-200 p-4 text-sm text-gray-800 flex flex-col">
       {/* Avatar */}
       <div className="flex justify-center mb-6">
         <img
@@ -40,7 +51,7 @@ export default function Sidebar() {
         />
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-2 flex-1">
         {/* Home */}
         <li className="flex items-center gap-3 bg-indigo-100 text-indigo-600 px-3 py-2 rounded-md font-medium">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -123,6 +134,35 @@ export default function Sidebar() {
           </ul>
         )}
       </ul>
+
+      {/* Logout button pinned to bottom */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <button onClick={() => setShowLogoutConfirm(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50">
+          <span className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+            {/* nicer logout icon (box arrow right) */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8v8" />
+            </svg>
+          </span>
+          <span>Logout</span>
+        </button>
+      </div>
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="bg-white rounded-lg p-6 shadow-lg z-10 w-80">
+            <h3 className="text-lg font-semibold mb-2">Confirm logout</h3>
+            <p className="text-sm text-gray-600 mb-4">Are you sure you want to logout?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowLogoutConfirm(false)} className="px-3 py-2 rounded bg-gray-100">Cancel</button>
+              <button onClick={handleLogout} className="px-3 py-2 rounded bg-red-600 text-white">Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

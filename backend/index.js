@@ -1,14 +1,14 @@
 require("dotenv").config();
-const express  = require("express");
-const cors     = require("cors");
-const path     = require("path");          
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
 const connectDB = require("./Connection/db");
 
-const userRoutes   = require("./routes/userroutes");
+const userRoutes = require("./routes/userroutes");
 const courseRoutes = require("./routes/courseroutes");
 
-const app  = express();
-const PORT = 3001;
+const app = express();
+const PORT = process.env.PORT || 3001;
 
 
 app.use(cors());
@@ -22,6 +22,24 @@ connectDB();
 app.use("/api", userRoutes);
 app.use("/api", courseRoutes);
 
-app.listen(PORT, () =>
-  console.log(`✅ Server running at: http://localhost:${PORT}`)
-);
+const server = app.listen(PORT, () => {
+  console.log(`✅ Server running at: http://localhost:${PORT}`);
+  // Development convenience: log presence of Razorpay keys (do NOT print the secret)
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    console.log('ℹ️ Razorpay keys are configured (key id present).');
+  } else {
+    console.log('⚠️ Razorpay keys not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
+  }
+});
+
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Either stop the process using that port or set the PORT environment variable to a different port before starting the server.`);
+    console.error(`Suggested commands (PowerShell):`);
+    console.error(`  Get-NetTCPConnection -LocalPort ${PORT} | Select-Object OwningProcess`);
+    console.error(`  Stop-Process -Id <PID> -Force`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+  }
+});

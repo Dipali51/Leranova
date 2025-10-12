@@ -18,7 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
 
 function ConditionalNavbar() {
   const location = useLocation();
-  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview', '/webinar', '/webinars', '/webinar/create'];
+  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview', '/webinar', '/webinars', '/webinar/create', '/login', '/signup'];
 
   // Check if current route should hide navbar
   const shouldHideNavbar = hideNavbarRoutes.some(route =>

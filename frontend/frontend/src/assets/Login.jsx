@@ -39,7 +39,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="dark-page relative h-screen w-screen">
       {/* Background Landing Page */}
       <div className="absolute inset-0 z-0">
         <LandingPage />

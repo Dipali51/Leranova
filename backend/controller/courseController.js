@@ -1,8 +1,11 @@
 const Courses = require("../models/course");
 const Asset = require("../models/asset");
 const Enrollment = require("../models/enrollment");
+const Payment = require('../models/payment');
+const User = require('../models/User');
 const path = require("path");
 const fs = require("fs");
+const crypto = require('crypto');
 
 
 // CREATE a new course
@@ -17,6 +20,18 @@ exports.createCourse = async (req, res) => {
       coverPath = "/uploads/images/" + req.files.coverImage[0].filename;
     }
 
+    // Collect payout details if provided
+    const payoutDetails = {};
+    if (req.body.bankName) payoutDetails.bankName = req.body.bankName;
+    if (req.body.accountNumber) payoutDetails.accountNumber = req.body.accountNumber;
+    if (req.body.ifsc) payoutDetails.ifsc = req.body.ifsc;
+    if (req.body.beneficiaryName) payoutDetails.beneficiaryName = req.body.beneficiaryName;
+
+    // handle payoutProof file if uploaded
+    if (req.files && req.files.payoutProof && req.files.payoutProof[0]) {
+      payoutDetails.payoutProof = `/uploads/misc/${req.files.payoutProof[0].filename}`;
+    }
+
     const newCourse = new Courses({
       title: req.body.title,
       description: req.body.description,
@@ -25,6 +40,7 @@ exports.createCourse = async (req, res) => {
       discountedPrice: req.body.discountedPrice,
       coverImage: coverPath,
       instructor: req.body.instructor || undefined,
+      payoutDetails: Object.keys(payoutDetails).length ? payoutDetails : undefined,
       pdfs: [],
       createdBy: req.user.id, // Initialize with empty array
     });
@@ -100,6 +116,17 @@ exports.updateCourse = async (req, res) => {
     course.pricingPlan = pricingPlan || course.pricingPlan;
     course.totalPrice = pricingPlan === "one-time" ? totalPrice : 0;
     course.discountedPrice = pricingPlan === "one-time" ? discountedPrice : 0;
+
+    // Update payout details if present in body or files
+    if (req.body.bankName) course.payoutDetails = course.payoutDetails || {};
+    if (req.body.bankName) course.payoutDetails.bankName = req.body.bankName;
+    if (req.body.accountNumber) course.payoutDetails.accountNumber = req.body.accountNumber;
+    if (req.body.ifsc) course.payoutDetails.ifsc = req.body.ifsc;
+    if (req.body.beneficiaryName) course.payoutDetails.beneficiaryName = req.body.beneficiaryName;
+    if (req.files && req.files.payoutProof && req.files.payoutProof[0]) {
+      course.payoutDetails = course.payoutDetails || {};
+      course.payoutDetails.payoutProof = `/uploads/misc/${req.files.payoutProof[0].filename}`;
+    }
 
     const updatedCourse = await course.save();
     res.json(updatedCourse);
@@ -344,6 +371,11 @@ exports.enrollInCourse = async (req, res) => {
     const course = await Courses.findById(courseId);
     if (!course) return res.status(404).json({ error: "Course not found" });
 
+    // If course is paid (one-time), require purchase flow instead — prevent free enroll via link
+    if (course.pricingPlan === 'one-time') {
+      return res.status(402).json({ error: 'Payment required. Use purchase endpoint to enroll.' });
+    }
+
     // simple dedupe check
     const existing = await Enrollment.findOne({ course: courseId, student: studentId });
     if (existing) return res.json({ message: "Already enrolled" });
@@ -355,6 +387,182 @@ exports.enrollInCourse = async (req, res) => {
   } catch (err) {
     console.error("Error in enrollInCourse:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Simulated purchase endpoint: records a purchase and enrolls the student
+exports.purchaseCourse = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const studentId = req.user ? req.user.id : null;
+    if (!studentId) return res.status(401).json({ error: 'Login required' });
+
+    const course = await Courses.findById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    if (course.pricingPlan !== 'one-time') return res.status(400).json({ error: 'Course is not a paid one-time course' });
+
+    // Ensure teacher has provided payout details so collected payments can be routed
+    if (!course.payoutDetails || !course.payoutDetails.accountNumber || !course.payoutDetails.bankName) {
+      return res.status(400).json({ error: 'Teacher payout details are missing. Teacher must add bank/payout details to receive payments.' });
+    }
+
+    // In a real app, you'd integrate with a payment gateway here. We'll accept a simulated payload.
+    const { paymentMethod = 'test', amount } = req.body;
+    if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'Invalid payment amount' });
+
+    // Determine the expected charge amount (discountedPrice preferred)
+    const expectedAmount = (course.discountedPrice && Number(course.discountedPrice) > 0) ? Number(course.discountedPrice) : Number(course.totalPrice);
+
+    // verify amount matches course price or discounted price
+    if (Number(amount) !== Number(expectedAmount)) {
+      return res.status(400).json({ error: 'Payment amount does not match course price' });
+    }
+
+    // record enrollment with source 'purchase'
+    const existing = await Enrollment.findOne({ course: courseId, student: studentId });
+    if (existing) return res.json({ message: 'Already enrolled' });
+
+    const enroll = new Enrollment({ course: courseId, student: studentId, source: 'purchase' });
+    await enroll.save();
+
+    // Create a payment record and credit the teacher's balance
+    const teacherId = course.createdBy;
+    const payment = new Payment({ course: courseId, student: studentId, teacher: teacherId, amount: Number(amount), method: paymentMethod });
+    await payment.save();
+
+    // Credit teacher balance (simple wallet)
+    const teacher = await User.findById(teacherId);
+    if (teacher) {
+      teacher.balance = (teacher.balance || 0) + Number(amount);
+      await teacher.save();
+    }
+
+    res.json({ message: 'Payment successful and enrolled', enroll, payment });
+  } catch (err) {
+    console.error('Error in purchaseCourse:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Create a Razorpay order for the course amount
+exports.createRazorpayOrder = async (req, res) => {
+  try {
+    // require razorpay lazily so server can start even if package isn't installed yet
+    let Razorpay;
+    try {
+      Razorpay = require('razorpay');
+    } catch (e) {
+      console.error('Razorpay module not found. Install with `npm install razorpay` in backend.');
+      return res.status(500).json({ error: 'Razorpay module not installed. Please install razorpay in backend.' });
+    }
+    const courseId = req.params.id;
+    const studentId = req.user ? req.user.id : null;
+    if (!studentId) return res.status(401).json({ error: 'Login required' });
+
+    const course = await Courses.findById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (course.pricingPlan !== 'one-time') return res.status(400).json({ error: 'Course is not a paid one-time course' });
+
+    // Ensure teacher payout details exist
+    if (!course.payoutDetails || !course.payoutDetails.accountNumber) {
+      return res.status(400).json({ error: 'Teacher payout details missing' });
+    }
+
+    const key_id = process.env.RAZORPAY_KEY_ID;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!key_id || !key_secret) return res.status(500).json({ error: 'Razorpay keys not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend .env' });
+
+    const instance = new Razorpay({ key_id, key_secret });
+    // Use discountedPrice when present, otherwise fall back to totalPrice
+    const chargeAmount = (course.discountedPrice && Number(course.discountedPrice) > 0) ? Number(course.discountedPrice) : Number(course.totalPrice);
+    const amountInPaise = Math.round(chargeAmount * 100);
+    // Razorpay restricts receipt length to <= 40 characters.
+    // Build a short receipt id using parts of courseId and timestamp to ensure uniqueness within the length limit.
+    const receiptId = `rcpt_${String(courseId).slice(-6)}_${String(Date.now()).slice(-6)}`; // typically ~18 chars
+    const options = {
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: receiptId,
+      notes: { courseId, studentId }
+    };
+    const order = await instance.orders.create(options);
+    // Return the order and the computed charge amount so frontend can display correctly
+    res.json({ order, key_id, chargeAmount });
+  } catch (err) {
+    console.error('Error creating razorpay order:', err);
+    // Return detailed message in dev to help debugging (do NOT leak in production)
+    const msg = err && err.message ? err.message : 'Failed to create order';
+    res.status(500).json({ error: 'Failed to create order', detail: msg });
+  }
+};
+
+// Verify Razorpay payment signature and finalize enrollment
+exports.verifyRazorpayPayment = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    const studentId = req.user ? req.user.id : null;
+    if (!studentId) return res.status(401).json({ error: 'Login required' });
+
+    const course = await Courses.findById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!key_secret) return res.status(500).json({ error: 'Razorpay secret not configured' });
+
+    const generated_signature = crypto.createHmac('sha256', key_secret)
+      .update(razorpay_order_id + '|' + razorpay_payment_id)
+      .digest('hex');
+
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    // At this point payment is verified. Create enrollment & payment record, credit teacher.
+    const existing = await Enrollment.findOne({ course: courseId, student: studentId });
+    if (existing) return res.json({ message: 'Already enrolled' });
+
+    const enroll = new Enrollment({ course: courseId, student: studentId, source: 'purchase' });
+    await enroll.save();
+
+    // create payment log (amount taken from discountedPrice or totalPrice)
+    const teacherId = course.createdBy;
+    const chargeAmountVerify = (course.discountedPrice && Number(course.discountedPrice) > 0) ? Number(course.discountedPrice) : Number(course.totalPrice);
+    const payment = new Payment({ course: courseId, student: studentId, teacher: teacherId, amount: chargeAmountVerify, method: 'razorpay' });
+    await payment.save();
+
+    // credit teacher
+    const teacher = await User.findById(teacherId);
+    if (teacher) {
+      teacher.balance = (teacher.balance || 0) + Number(chargeAmountVerify);
+      await teacher.save();
+    }
+
+    res.json({ message: 'Payment verified, enrolled', enroll, payment });
+  } catch (err) {
+    console.error('Error verifying razorpay payment:', err);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+};
+
+// Optional webhook endpoint for Razorpay events (configure RAZORPAY_WEBHOOK_SECRET)
+exports.razorpayWebhook = async (req, res) => {
+  try {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const body = JSON.stringify(req.body);
+    const signature = req.headers['x-razorpay-signature'];
+    if (secret) {
+      const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
+      if (expected !== signature) return res.status(400).send('invalid signature');
+    }
+
+    // handle events as needed (payment.captured etc.)
+    console.log('Razorpay webhook received', req.body.event);
+    res.status(200).send('ok');
+  } catch (err) {
+    console.error('Webhook error', err);
+    res.status(500).send('error');
   }
 };
 

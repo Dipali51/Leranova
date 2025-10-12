@@ -13,6 +13,11 @@ export default function CreateCourse() {
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [coverImage, setCoverImage] = useState(null);
   const [coverPreview, setCoverPreview] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifsc, setIfsc] = useState("");
+  const [beneficiaryName, setBeneficiaryName] = useState("");
+  const [payoutProof, setPayoutProof] = useState(null);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -74,6 +79,14 @@ export default function CreateCourse() {
       formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
       if (coverImage) formData.append("coverImage", coverImage);
+      // Payout details for paid courses
+      if (plan === "one-time") {
+        if (bankName) formData.append("bankName", bankName);
+        if (accountNumber) formData.append("accountNumber", accountNumber);
+        if (ifsc) formData.append("ifsc", ifsc);
+        if (beneficiaryName) formData.append("beneficiaryName", beneficiaryName);
+        if (payoutProof) formData.append("payoutProof", payoutProof);
+      }
 
       const token = localStorage.getItem("token"); // 👈 fetch token
 
@@ -131,6 +144,13 @@ export default function CreateCourse() {
       formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
       if (coverImage) formData.append("coverImage", coverImage);
+      if (plan === "one-time") {
+        if (bankName) formData.append("bankName", bankName);
+        if (accountNumber) formData.append("accountNumber", accountNumber);
+        if (ifsc) formData.append("ifsc", ifsc);
+        if (beneficiaryName) formData.append("beneficiaryName", beneficiaryName);
+        if (payoutProof) formData.append("payoutProof", payoutProof);
+      }
 
       const token = localStorage.getItem("token");
 
@@ -307,6 +327,38 @@ export default function CreateCourse() {
                 </div>
               )}
             </label>
+            {/* Bank / payout fields for paid courses */}
+            {plan === 'one-time' && (
+              <div className="mt-4 border p-4 rounded">
+                <h4 className="font-semibold mb-2">Payout / Bank details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm mb-1">Beneficiary name</label>
+                    <input value={beneficiaryName} onChange={(e) => setBeneficiaryName(e.target.value)} className="border p-2 rounded w-full" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1">Bank name</label>
+                    <input value={bankName} onChange={(e) => setBankName(e.target.value)} className="border p-2 rounded w-full" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1">Account number</label>
+                    <input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="border p-2 rounded w-full" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1">IFSC</label>
+                    <input value={ifsc} onChange={(e) => setIfsc(e.target.value)} className="border p-2 rounded w-full" />
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="block text-sm mb-1">Upload payout proof (optional: bank scan/cheque)</label>
+                  <input type="file" accept="image/*,application/pdf" onChange={(e) => setPayoutProof(e.target.files[0])} />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-indigo-50 text-indigo-700 p-3 mt-4 text-sm border-l-4 border-indigo-500 rounded">

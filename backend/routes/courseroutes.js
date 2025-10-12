@@ -72,6 +72,7 @@ router.get("/course/:id", async (req, res) => {
 
 router.put("/course/:id", upload.fields([
   { name: "coverImage", maxCount: 1 },
+  { name: "payoutProof", maxCount: 1 },
 ]), courseController.updateCourse);
 
 // ✅ Create course (merged route for coverImage and PDFfile)
@@ -81,6 +82,7 @@ router.post(
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "PDFfile", maxCount: 1 },
+    { name: "payoutProof", maxCount: 1 },
   ]),
   courseController.createCourse
 );
@@ -98,6 +100,18 @@ router.post("/course/:id/import-assets", auth, courseController.importAssetsToCo
 
 // Enroll via link
 router.post("/course/:id/enroll", auth, courseController.enrollInCourse);
+
+// Purchase (pay) for a one-time paid course and enroll
+router.post("/course/:id/purchase", auth, courseController.purchaseCourse);
+
+// Razorpay: create order
+router.post('/course/:id/create-order', auth, courseController.createRazorpayOrder);
+
+// Razorpay: verify payment (client-side callback)
+router.post('/course/:id/verify-payment', auth, courseController.verifyRazorpayPayment);
+
+// Razorpay webhook (no auth expected from Razorpay)
+router.post('/webhook/razorpay', express.raw({ type: 'application/json' }), courseController.razorpayWebhook);
 
 // List enrollments for current student
 router.get("/my-enrollments", auth, courseController.listEnrollmentsForStudent);

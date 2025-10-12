@@ -33,6 +33,15 @@ const CourseSchema = new mongoose.Schema({
     required: false,
   },
 
+  // Payout / bank details for paid courses (teacher payout information)
+  payoutDetails: {
+    bankName: { type: String },
+    accountNumber: { type: String },
+    ifsc: { type: String },
+    beneficiaryName: { type: String },
+    payoutProof: { type: String }, // path to uploaded proof (image/pdf)
+  },
+
   // Legacy PDFs array (kept for backwards compatibility)
   pdfs: [
     {

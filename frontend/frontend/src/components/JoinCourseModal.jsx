@@ -4,6 +4,16 @@ import axios from "axios";
 export default function JoinCourseModal({ onClose, onJoined }) {
     const [link, setLink] = useState("");
     const [loading, setLoading] = useState(false);
+    const fetchCourse = async (courseId) => {
+        try {
+            const res = await axios.get(`http://localhost:3001/api/course/${courseId}`);
+            return res.data;
+            /* eslint-disable no-unused-vars */
+        } catch (err) {
+            return null;
+        }
+        /* eslint-enable no-unused-vars */
+    };
 
     const handleJoin = async () => {
         // expect link like http://localhost:5173/courses/enroll/<courseId> or just the id
@@ -13,6 +23,65 @@ export default function JoinCourseModal({ onClose, onJoined }) {
             if (maybe) courseId = maybe[1];
             setLoading(true);
             const token = localStorage.getItem("token");
+
+            // fetch course info first to check pricing
+            const fetched = await fetchCourse(courseId);
+            if (fetched && fetched.pricingPlan === 'one-time') {
+                // Use Razorpay: create order on server
+                try {
+                    const resOrder = await axios.post(`http://localhost:3001/api/course/${courseId}/create-order`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                    const { order, key_id } = resOrder.data;
+
+                    // load razorpay script
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.body.appendChild(script);
+                    });
+
+                    const options = {
+                        key: key_id,
+                        amount: order.amount,
+                        currency: order.currency,
+                        name: fetched.title,
+                        description: 'Course purchase',
+                        order_id: order.id,
+                        handler: async function (response) {
+                            // verify on server
+                            try {
+                                const verifyRes = await axios.post(`http://localhost:3001/api/course/${courseId}/verify-payment`, {
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_signature: response.razorpay_signature
+                                }, { headers: { Authorization: `Bearer ${token}` } });
+                                alert(verifyRes.data.message || 'Payment successful and enrolled');
+                                if (onJoined) onJoined();
+                                onClose();
+                            } catch (ve) {
+                                console.error('Verification failed', ve);
+                                alert('Payment verification failed');
+                            }
+                        },
+                        prefill: { email: '', name: '' },
+                        notes: { courseId },
+                        theme: { color: '#3399cc' }
+                    };
+
+                    const rzp = new window.Razorpay(options);
+                    rzp.open();
+                    setLoading(false);
+                    return;
+                } catch (errOrder) {
+                    console.error('Order creation failed', errOrder);
+                    alert(errOrder.response?.data?.error || 'Failed to initiate payment');
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // Free course or enroll-by-link
             const res = await axios.post(`http://localhost:3001/api/course/${courseId}/enroll`, {}, { headers: { Authorization: `Bearer ${token}` } });
             alert(res.data.message || "Enrolled");
             setLoading(false);

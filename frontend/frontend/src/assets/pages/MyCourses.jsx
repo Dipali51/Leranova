@@ -47,7 +47,39 @@ export default function MyCourses() {
     }, []);
 
     return (
-        <div className="p-18">
+        <div className="p-18 light-page relative overflow-hidden">
+            {/* Decorative background layers for an attractive light look. They are
+                absolutely positioned and non-interactive (aria-hidden). */}
+            <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+                <div className="absolute -left-32 -top-32 w-96 h-96 light-blob opacity-60" />
+                <div className="absolute -right-28 -bottom-24 w-80 h-80 light-blob-2 opacity-50" />
+            </div>
+
+            {/* Per-page light-theme overrides. These rules load after the global
+                dark overrides and re-apply light colors and softer visuals for
+                this page only. */}
+            <style>{`
+                /* Light purple theme */
+                .light-page { background: linear-gradient(180deg,#fbf8ff 0%, #f3e8ff 40%, #fdf6ff 100%); color: #0f172a; }
+                .light-page h1, .light-page h2, .light-page h3, .light-page h4 { color: #1f2937 !important; }
+                .light-page .bg-white { background-color: #ffffff !important; color: #0f172a !important; }
+                .light-page [class*="bg-gray-"] { background-color: #fbf7ff !important; }
+                .light-page .bg-indigo-50 { background-color: #f5f3ff !important; }
+                .light-page .text-gray-600, .light-page .text-gray-500, .light-page .text-gray-700, .light-page .text-gray-800, .light-page .text-gray-900 {
+                    color: #52525b !important;
+                }
+                .light-page a, .light-page a:hover { color: #4c1d95 !important; }
+                .light-page .light-card { background: #ffffff !important; color: #0f172a !important; border: 1px solid rgba(76,29,149,0.06); box-shadow: 0 10px 30px rgba(76,29,149,0.06); }
+                .light-page .light-progress { background: rgba(76,29,149,0.08) !important; }
+
+                /* decorative blobs: purple hues */
+                .light-page .light-blob { border-radius: 9999px; background: radial-gradient(circle at 30% 30%, rgba(124,58,237,0.28), rgba(99,102,241,0.22) 40%, transparent 60%); filter: blur(36px); }
+                .light-page .light-blob-2 { border-radius: 9999px; background: radial-gradient(circle at 70% 70%, rgba(167,139,250,0.18), rgba(124,58,237,0.14) 40%, transparent 60%); filter: blur(28px); }
+
+                /* make outlines and controls subtle */
+                .light-page .border { border-color: rgba(76,29,149,0.06) !important; }
+                .light-page .rounded-lg { border-radius: 12px !important; }
+            `}</style>
             <header className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">My Courses</h1>
