@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom"; // ✅ for extracting courseId from URL
 import PdfUploadModal from "./PdfUploadModal";
+import AssetLibraryImportModal from "./AssetLibraryImportModal";
+import axios from "axios";
 
 export default function AddManuallyModal({ onClose }) {
   const { courseId } = useParams();
-console.log("✅ Got courseId from URL:", courseId); // ✅ get courseId from URL like /course-content/:id
+  console.log("✅ Got courseId from URL:", courseId); // ✅ get courseId from URL like /course-content/:id
   const [selectedUploadType, setSelectedUploadType] = useState("");
+  const [showImport, setShowImport] = useState(false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -67,7 +70,7 @@ console.log("✅ Got courseId from URL:", courseId); // ✅ get courseId from UR
           {/* Import */}
           <div className="flex flex-col items-center justify-center">
             <p className="text-sm text-gray-600 mb-2">OR</p>
-            <button className="border border-blue-500 text-blue-500 px-4 py-2 rounded hover:bg-blue-50">
+            <button onClick={() => setShowImport(true)} className="border border-blue-500 text-blue-500 px-4 py-2 rounded hover:bg-blue-50">
               📁 Import from Asset Library
             </button>
           </div>
@@ -79,6 +82,22 @@ console.log("✅ Got courseId from URL:", courseId); // ✅ get courseId from UR
         <PdfUploadModal
           courseId={courseId}
           onClose={() => setSelectedUploadType("")}
+        />
+      )}
+
+      {showImport && (
+        <AssetLibraryImportModal
+          onClose={() => setShowImport(false)}
+          onImport={async (assetIds) => {
+            try {
+              const token = localStorage.getItem("token");
+              await axios.post(`http://localhost:3001/api/course/${courseId}/import-assets`, { assetIds }, { headers: { Authorization: `Bearer ${token}` } });
+              alert("Imported assets into course");
+            } catch (err) {
+              console.error(err);
+              alert("Failed to import assets");
+            }
+          }}
         />
       )}
     </div>

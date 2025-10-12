@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '../../layout/Sidebar';
 import { Link, useNavigate } from "react-router-dom";
 import axios from 'axios';
-import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaEye, FaCommentDots } from "react-icons/fa";
+import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaCommentDots, FaLink } from "react-icons/fa";
 
 export default function Courses() {
   // ✅ define role state properly
@@ -16,6 +16,7 @@ export default function Courses() {
 
 
   const [courses, setCourses] = useState([]);
+  const [studentsModal, setStudentsModal] = useState({ open: false, courseTitle: '', students: [], count: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -124,14 +125,36 @@ export default function Courses() {
                 />
                 <FaUsers
                   className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
-                  onClick={() => alert(`Course Enrollment:\nCourse: ${course.title}\nStudents Enrolled: ${course.enrolledStudents || 0}\nCapacity: ${course.maxStudents || 'Unlimited'}`)}
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      const res = await axios.get(`http://localhost:3001/api/course/${course._id}/enrollments`, { headers: { Authorization: `Bearer ${token}` } });
+                      setStudentsModal({ open: true, courseTitle: course.title, students: res.data.students || [], count: res.data.count || 0 });
+                    } catch (err) {
+                      console.error('Failed to fetch enrollments', err);
+                      alert('Failed to load enrollments');
+                    }
+                  }}
                   title="View Students"
                 />
-                <FaEye
-                  onClick={() => navigate(`/courses/preview/${course._id}`)}
+                <button
+                  onClick={() => {
+                    const link = `${window.location.origin}/courses/enroll/${course._id}`;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                      navigator.clipboard.writeText(link).then(() => {
+                        alert('Enrollment link copied to clipboard:\n' + link);
+                      }).catch(() => {
+                        prompt('Copy this link:', link);
+                      });
+                    } else {
+                      prompt('Copy this link:', link);
+                    }
+                  }}
                   className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
-                  title="Preview Course"
-                />
+                  title="Copy enroll link"
+                >
+                  <FaLink />
+                </button>
                 <FaCommentDots
                   className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
                   onClick={() => alert(`Course Feedback:\nCourse: ${course.title}\nRating: ${course.rating || 'No ratings yet'}\nReviews: ${course.reviewCount || 0} reviews\nComments: ${course.commentCount || 0} comments`)}
@@ -141,6 +164,36 @@ export default function Courses() {
             </div>
           ))}
         </div>
+
+        {/* Students Modal */}
+        {studentsModal.open && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Students enrolled in {studentsModal.courseTitle}</h3>
+                <button onClick={() => setStudentsModal({ open: false, courseTitle: '', students: [], count: 0 })}>✖</button>
+              </div>
+              <div className="mb-4 text-sm text-gray-600">Total students: {studentsModal.count}</div>
+              <div className="max-h-64 overflow-auto">
+                {studentsModal.students.length === 0 ? (
+                  <div className="text-gray-500">No students found</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {studentsModal.students.map((s, i) => (
+                      <li key={i} className="flex items-center justify-between border p-2 rounded">
+                        <div>
+                          <div className="font-medium">{s.username || s.name || s.email}</div>
+                          <div className="text-xs text-gray-500">{s.email}</div>
+                        </div>
+                        <div className="text-xs text-gray-400">ID: {s._id}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

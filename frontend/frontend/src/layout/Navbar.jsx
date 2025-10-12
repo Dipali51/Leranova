@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import JoinCourseModal from "../components/JoinCourseModal";
 
 export default function Navbar({ userType }) {
+  const [showJoin, setShowJoin] = useState(false);
+
   return (
     <nav className="w-full fixed top-0 left-0 z-50 backdrop-blur-md bg-white/10 shadow-sm p-4 flex justify-between items-center">
       {/* Logo */}
@@ -27,6 +30,7 @@ export default function Navbar({ userType }) {
             <Link to="/my-courses" className="hover:text-purple-600">My Courses</Link>
             <Link to="/webinars" className="hover:text-purple-600">Webinars</Link>
             <Link to="/profile" className="hover:text-purple-600">Profile</Link>
+            <button onClick={() => setShowJoin(true)} className="ml-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Join Course</button>
           </>
         )}
 
@@ -41,6 +45,7 @@ export default function Navbar({ userType }) {
           </>
         )}
       </div>
+      {showJoin && <JoinCourseModal onClose={() => setShowJoin(false)} />}
     </nav>
   );
 }

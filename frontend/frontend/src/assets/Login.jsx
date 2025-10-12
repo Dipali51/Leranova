@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LandingPage from './pages/Landingpage'; 
+import LandingPage from './pages/Landingpage';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -26,7 +26,9 @@ export default function Login() {
         localStorage.setItem('name', data.name);
 
         alert('Login successful');
-        navigate('/home'); // redirect after login
+        // Redirect students directly to My Courses, others to Home
+        if (data.role === 'student') navigate('/my-courses');
+        else navigate('/home');
       } else {
         alert(data.error || 'Login failed');
       }

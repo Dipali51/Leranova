@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-export default function CourseSidebar() {
+export default function CourseSidebar({ onSelect, onAddChapter }) {
   const { courseId } = useParams();
-  const [pdfs, setPdfs] = useState([]);
+  const [chapters, setChapters] = useState([]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -12,10 +12,10 @@ export default function CourseSidebar() {
         const res = await axios.get(`http://localhost:3001/api/course/${courseId}`);
         const courseData = res.data;
 
-        if (Array.isArray(courseData.pdfs)) {
-          setPdfs(courseData.pdfs);
+        if (Array.isArray(courseData.chapters)) {
+          setChapters(courseData.chapters);
         } else {
-          console.warn("⚠️ `pdfs` is not an array:", courseData.pdfs);
+          console.warn("⚠️ `chapters` is not an array:", courseData.chapters);
         }
       } catch (err) {
         console.error("❌ Error fetching course:", err);
@@ -44,14 +44,17 @@ export default function CourseSidebar() {
 
         {/* 📚 Render chapters from PDFs */}
         <div className="space-y-2">
-          {pdfs.length > 0 ? (
-            pdfs.map((pdf, index) => (
+          {chapters.length > 0 ? (
+            chapters.map((ch, index) => (
               <div
                 key={index}
                 className="border p-2 rounded text-sm hover:bg-blue-100 cursor-pointer"
-                onClick={() => window.open(`http://localhost:3001${pdf.url}`, "_blank")}
+                onClick={() => {
+                  if (typeof onSelect === 'function') onSelect(index);
+                  else window.open(ch.videoUrl ? `http://localhost:3001${ch.videoUrl}` : (ch.notes && ch.notes[0] ? `http://localhost:3001${ch.notes[0].url}` : '#'), "_blank");
+                }}
               >
-                📘 Chapter {index + 1}: {pdf.title || "Untitled PDF"}
+                🎬 Chapter {index + 1}: {ch.title || "Untitled Chapter"}
               </div>
             ))
           ) : (
@@ -60,9 +63,24 @@ export default function CourseSidebar() {
         </div>
       </div>
 
-      <div className="bg-blue-900 text-white py-3 text-center rounded cursor-pointer mt-6">
-        ➕ Add new chapter
-      </div>
+      {(() => {
+        // show add button only for teachers
+        let isTeacher = false;
+        try {
+          const t = localStorage.getItem('token');
+          if (t) {
+            const payload = JSON.parse(atob(t.split('.')[1]));
+            isTeacher = payload?.role === 'teacher';
+          }
+        } catch {
+          // ignore
+        }
+        return isTeacher ? (
+          <div onClick={() => { if (typeof onAddChapter === 'function') onAddChapter(); }} className="bg-blue-900 text-white py-3 text-center rounded cursor-pointer mt-6">
+            ➕ Add new chapter
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }

@@ -4,6 +4,7 @@ const upload = require("../middleware/upload");
 const courseController = require("../controller/courseController");
 const Course = require("../models/course"); // ⬅️ Import Course model
 const auth = require("../middleware/auth");
+const assetController = require("../controller/courseController");
 
 // ✅ Upload Cover Image
 router.post("/upload-cover", upload.single("coverImage"), (req, res) => {
@@ -86,5 +87,51 @@ router.post(
 
 // ✅ Get all courses
 router.get("/courses", auth, courseController.getAllCourses);
+
+// Asset routes
+router.post("/assets/upload", auth, upload.single("asset"), assetController.uploadAsset);
+router.get("/assets", auth, assetController.listAssets);
+router.delete("/assets/:id", auth, assetController.deleteAsset);
+
+// Import assets into course
+router.post("/course/:id/import-assets", auth, courseController.importAssetsToCourse);
+
+// Enroll via link
+router.post("/course/:id/enroll", auth, courseController.enrollInCourse);
+
+// List enrollments for current student
+router.get("/my-enrollments", auth, courseController.listEnrollmentsForStudent);
+
+// List enrollments for a course (teacher view)
+router.get("/course/:id/enrollments", auth, courseController.listEnrollmentsForCourse);
+
+// Publish course
+router.post('/course/:id/publish', auth, courseController.publishCourse);
+
+// Upload chapter (video + assignment + notes)
+router.post(
+  "/course/:id/upload-chapter",
+  auth,
+  upload.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'assignment', maxCount: 3 },
+    { name: 'notes', maxCount: 3 },
+  ]),
+  courseController.uploadChapter
+);
+
+// Update chapter
+router.put(
+  "/course/:id/chapter/:chapterId",
+  auth,
+  upload.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'assignment', maxCount: 3 },
+    { name: 'notes', maxCount: 3 },
+  ]),
+  courseController.updateChapter
+);
+
+// (debug routes removed)
 
 module.exports = router;

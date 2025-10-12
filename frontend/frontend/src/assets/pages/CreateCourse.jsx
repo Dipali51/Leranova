@@ -7,6 +7,7 @@ import Sidebar from "../../layout/Sidebar";
 export default function CreateCourse() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [instructor, setInstructor] = useState("");
   const [plan, setPlan] = useState("free");
   const [totalPrice, setTotalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
@@ -24,6 +25,7 @@ export default function CreateCourse() {
           const course = res.data;
           setTitle(course.title);
           setDescription(course.description);
+          setInstructor(course.instructor || "");
           setPlan(course.pricingPlan);
           setTotalPrice(course.totalPrice);
           setDiscountedPrice(course.discountedPrice);
@@ -67,6 +69,7 @@ export default function CreateCourse() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("instructor", instructor);
       formData.append("pricingPlan", plan);
       formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
@@ -123,6 +126,7 @@ export default function CreateCourse() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("instructor", instructor);
       formData.append("pricingPlan", plan);
       formData.append("totalPrice", plan === "one-time" ? totalPrice : 0);
       formData.append("discountedPrice", plan === "one-time" ? discountedPrice : 0);
@@ -226,6 +230,15 @@ export default function CreateCourse() {
           />
 
           <label className="block font-medium text-lg mb-2 mt-6">Set pricing</label>
+
+          <label className="block font-medium mb-1 mt-6">Instructor name</label>
+          <input
+            type="text"
+            placeholder="Instructor full name"
+            value={instructor}
+            onChange={(e) => setInstructor(e.target.value)}
+            className="border p-2 rounded w-full mb-4"
+          />
           <div className="space-y-4">
             <label className="block border p-4 rounded-lg cursor-pointer">
               <div className="flex items-center space-x-3">

@@ -13,6 +13,7 @@ import CreateCourse from './assets/pages/CreateCourse';
 import CourseContent from './assets/pages/CourseContent';
 import AddCourseContent from './assets/pages/CourseContent';
 import CoursePreview from './assets/pages/CoursePreview';
+import MyCourses from './assets/pages/MyCourses';
 import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
 
 function ConditionalNavbar() {
@@ -24,8 +25,13 @@ function ConditionalNavbar() {
     location.pathname === route || location.pathname.startsWith(route)
   );
 
-  return !shouldHideNavbar ? <Navbar /> : null;
-} function App() {
+  // read role from localStorage so Navbar can render role-specific links
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+
+  return !shouldHideNavbar ? <Navbar userType={userRole} /> : null;
+}
+
+function App() {
   return (
     <Router>
       <ConditionalNavbar />
@@ -68,6 +74,7 @@ function ConditionalNavbar() {
         <Route path="/add-content" element={<AddCourseContent />} />
         <Route path="/course-content/:courseId" element={<CourseContent />} />
         <Route path="/courses/preview/:id" element={<CoursePreview />} />
+        <Route path="/my-courses" element={<MyCourses />} />
       </Routes>
     </Router>
   );
