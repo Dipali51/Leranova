@@ -9,6 +9,7 @@ const Webinar = require('../models/webinar');
 const Package = require('../models/package');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const Verification = require('../models/verification');
 
 
 // User Registration
@@ -25,20 +26,154 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ error: 'Email already in use' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Registration now requires prior verification record
+        const verification = await Verification.findOne({ email });
+        if (!verification) {
+            return res.status(400).json({ error: 'No verification found for this email. Request verification first.' });
+        }
 
+        // Make sure the verification hasn't expired
+        if (verification.expiresAt < Date.now()) {
+            await Verification.deleteOne({ email });
+            return res.status(400).json({ error: 'Verification expired. Request a new code.' });
+        }
+
+        // Hash the password stored in verification (we stored passwordHash already)
         const newUser = new User({
             username,   // 👈 match schema
             email,
-            password: hashedPassword,
+            password: verification.passwordHash,
             role: role || "student",
         });
 
         await newUser.save();
+        // remove verification record
+        await Verification.deleteOne({ email });
+
         res.status(201).json({ message: 'User registered successfully', user: newUser });
     } catch (error) {
         console.error("❌ Error in registration:", error);
         res.status(500).json({ error: 'Error registering user' });
+    }
+};
+
+// Request verification code (step 1)
+exports.requestVerification = async (req, res) => {
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    try {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ error: 'Email already in use' });
+
+        // generate 6-digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // upsert verification
+        await Verification.findOneAndUpdate({ email }, { username, email, passwordHash, role: role || 'student', code, expiresAt }, { upsert: true, new: true });
+
+        // If SMTP is not configured (no explicit host+port and no service) OR we're running outside production,
+        // fall back to dev behaviour (log and return code). If EMAIL_HOST+EMAIL_PORT or EMAIL_SERVICE are present,
+        // we'll attempt to send.
+        const hasExplicitSmtp = process.env.EMAIL_HOST && process.env.EMAIL_PORT && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+        const hasServiceSmtp = process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+        if (!(hasExplicitSmtp || hasServiceSmtp) || process.env.NODE_ENV !== 'production') {
+            // Dev-friendly: log the code and return it in the response so local testing doesn't require SMTP
+            console.warn('⚠️ Email not configured or running in non-production mode. Logging verification code to console (dev mode).');
+            console.log(`Verification code for ${email}: ${code}`);
+            return res.status(200).json({ message: 'Verification code generated (dev mode)', code });
+        }
+
+        // send email via configured SMTP. Support explicit host/port (EMAIL_HOST/EMAIL_PORT) or nodemailer 'service'.
+        let transporter;
+        if (process.env.EMAIL_HOST && process.env.EMAIL_PORT) {
+            transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST,
+                port: Number(process.env.EMAIL_PORT),
+                secure: process.env.EMAIL_SECURE === 'true', // true for port 465
+                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+            });
+        } else {
+            transporter = nodemailer.createTransport({
+                service: process.env.EMAIL_SERVICE,
+                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+            });
+        }
+
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: email,
+            subject: 'Your verification code',
+            text: `Your verification code is: ${code}. It expires in 15 minutes.`
+        };
+
+        try {
+            // verify SMTP connection before sending (helps debug auth/connectivity issues)
+            await transporter.verify();
+        } catch (verifyErr) {
+            console.error('SMTP verify failed:', verifyErr);
+            // continue to attempt sending; sendMail will likely fail but we'll capture its error
+        }
+
+        transporter.sendMail(mailOptions, (err, info) => {
+            if (err) {
+                console.error('Error sending verification email', err);
+                // Fallback: log the code and include it and the error message in the response for debugging
+                console.warn('Falling back to logging the code to console due to send error');
+                console.log(`Verification code for ${email}: ${code}`);
+                return res.status(200).json({ message: 'Verification code generated (logged to server console) - email send failed', code, error: err.message });
+            }
+            console.log('Verification email sent:', info && info.response ? info.response : info);
+            return res.status(200).json({ message: 'Verification code sent' });
+        });
+    } catch (error) {
+        console.error('Error requesting verification:', error);
+        res.status(500).json({ error: 'Error requesting verification' });
+    }
+};
+
+// Confirm verification and create user (step 2)
+exports.confirmVerification = async (req, res) => {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+    try {
+        const verification = await Verification.findOne({ email });
+        if (!verification) return res.status(400).json({ error: 'No verification found' });
+        if (verification.expiresAt < Date.now()) {
+            await Verification.deleteOne({ email });
+            return res.status(400).json({ error: 'Verification expired' });
+        }
+        if (verification.code !== code) return res.status(400).json({ error: 'Invalid code' });
+
+        // ensure username/email not taken (could happen if another registration completed)
+        const existingByEmail = await User.findOne({ email: verification.email });
+        if (existingByEmail) {
+            await Verification.deleteOne({ email });
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+        const existingByUsername = await User.findOne({ username: verification.username });
+        if (existingByUsername) {
+            // if username already exists, append a suffix to make it unique or return error
+            // here we'll return an error so the client can pick a different username
+            await Verification.deleteOne({ email });
+            return res.status(400).json({ error: 'Username already taken' });
+        }
+
+        // create user using the stored hashed password
+        const newUser = new User({ username: verification.username, email: verification.email, password: verification.passwordHash, role: verification.role });
+        await newUser.save();
+        await Verification.deleteOne({ email });
+        res.status(201).json({ message: 'User verified and created', user: newUser });
+    } catch (error) {
+        console.error('Error confirming verification:', error);
+        // include the error message to help debug from frontend (but avoid exposing stacks in production)
+        res.status(500).json({ error: 'Error confirming verification', message: error.message });
     }
 };
 
@@ -101,17 +236,28 @@ exports.forgetPassword = async (req, res) => {
         await user.save();
 
 
-        const transporter = nodemailer.createTransport({
-            service: process.env.EMAIL_SERVICE,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD
-            }
-        });
+        // support explicit SMTP host/port for reset emails as well
+        let transporter;
+        if (process.env.EMAIL_HOST && process.env.EMAIL_PORT) {
+            transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST,
+                port: Number(process.env.EMAIL_PORT),
+                secure: process.env.EMAIL_SECURE === 'true',
+                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+            });
+        } else {
+            transporter = nodemailer.createTransport({
+                service: process.env.EMAIL_SERVICE,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            });
+        }
 
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
             to: email,
             subject: 'Password Reset Request',
             text: `To reset your password, click the following link or paste it into your browser:\n\nhttp://localhost:3001/api/users/reset-password?token=${resetToken}\n\nIf you did not request a password reset, please ignore this email.`
