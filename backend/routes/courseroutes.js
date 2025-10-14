@@ -146,6 +146,10 @@ router.put(
   courseController.updateChapter
 );
 
-// (debug routes removed)
+// Package Routes
+router.post('/packages', auth, courseController.createPackage);
+router.get('/packages', auth, courseController.getPackages);
+router.put('/packages/:id', auth, courseController.updatePackage);
+router.delete('/packages/:id', auth, courseController.deletePackage);
 
 module.exports = router;

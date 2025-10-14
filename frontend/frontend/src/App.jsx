@@ -14,11 +14,13 @@ import CourseContent from './assets/pages/CourseContent';
 import AddCourseContent from './assets/pages/CourseContent';
 import CoursePreview from './assets/pages/CoursePreview';
 import MyCourses from './assets/pages/MyCourses';
+import AdminLogin from './assets/pages/AdminLogin';
+import AdminDashboard from './assets/pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
 
 function ConditionalNavbar() {
   const location = useLocation();
-  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview', '/webinar', '/webinars', '/webinar/create', '/login', '/signup'];
+  const hideNavbarRoutes = ['/packages', '/courses', '/home', '/courses/create', '/course-content', '/courses/preview', '/webinar', '/webinars', '/webinar/create', '/login', '/signup', '/admin', '/admin/login'];
 
   // Check if current route should hide navbar
   const shouldHideNavbar = hideNavbarRoutes.some(route =>
@@ -75,6 +77,15 @@ function App() {
         <Route path="/course-content/:courseId" element={<CourseContent />} />
         <Route path="/courses/preview/:id" element={<CoursePreview />} />
         <Route path="/my-courses" element={<MyCourses />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

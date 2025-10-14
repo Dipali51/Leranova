@@ -27,61 +27,26 @@ export default function Packages() {
         fetchCourses();
     }, []);
 
-    const fetchPackages = () => {
-        // Get current user's ID from token
+    const fetchPackages = async () => {
         const token = localStorage.getItem("token");
-        let userId = null;
-
-        if (token) {
-            try {
-                // Decode JWT token to get user ID (basic decode, not secure but works for client)
-                const base64Payload = token.split('.')[1];
-                const payload = JSON.parse(atob(base64Payload));
-                userId = payload.id;
-                console.log("📋 Current user ID:", userId);
-            } catch (error) {
-                console.error("Error decoding token:", error);
-            }
-        }
-
-        if (!userId) {
-            console.log("❌ No user ID found, cannot load packages");
+        if (!token) {
+            console.log("❌ No token found");
             setPackages([]);
             return;
         }
 
-        // Get packages for this specific user from localStorage
-        const userPackagesKey = `userPackages_${userId}`;
-        const storedPackages = localStorage.getItem(userPackagesKey);
-
-        if (storedPackages) {
-            try {
-                const parsedPackages = JSON.parse(storedPackages);
-                setPackages(parsedPackages);
-                console.log("✅ Loaded", parsedPackages.length, "packages for user", userId);
-            } catch (error) {
-                console.error("Error parsing stored packages:", error);
-                setPackages([]);
-            }
-        } else {
-            setPackages([]);
-            console.log("📦 No packages found for user", userId);
-        }
-
-        // TODO: When backend package API is ready, fetch real packages here:
-        /*
         try {
-          const response = await axios.get("http://localhost:3001/api/packages", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setPackages(response.data);
+            const response = await axios.get("http://localhost:3001/api/packages", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setPackages(response.data);
+            console.log("✅ Loaded", response.data.length, "packages from backend");
         } catch (error) {
-          console.error("Error fetching packages:", error);
-          setPackages([]);
+            console.error("Error fetching packages:", error);
+            setPackages([]);
         }
-        */
     };
 
     const fetchCourses = async () => {
@@ -133,7 +98,7 @@ export default function Packages() {
         }
     };
 
-    const handleCreatePackage = (e) => {
+    const handleCreatePackage = async (e) => {
         e.preventDefault();
 
         if (!newPackage.title || !newPackage.description || newPackage.selectedCourses.length < 2) {
@@ -151,67 +116,39 @@ export default function Packages() {
             return;
         }
 
-        const selectedCourseDetails = courses.filter(course =>
-            newPackage.selectedCourses.includes(course._id)
-        );
-
-        const totalCoursesPrice = selectedCourseDetails.reduce((sum, course) => sum + course.price, 0);
-        const savings = parseInt(newPackage.totalPrice) - parseInt(newPackage.discountedPrice);
-
-        // Get current user ID
         const token = localStorage.getItem("token");
-        let userId = null;
-
-        if (token) {
-            try {
-                const base64Payload = token.split('.')[1];
-                const payload = JSON.parse(atob(base64Payload));
-                userId = payload.id;
-            } catch (error) {
-                console.error("Error decoding token:", error);
-                alert("Error: Unable to identify user. Please login again.");
-                return;
-            }
-        }
-
-        if (!userId) {
+        if (!token) {
             alert("Error: Please login to create packages.");
             return;
         }
 
-        const createdPackage = {
-            _id: Date.now().toString(),
-            title: newPackage.title,
-            description: newPackage.description,
-            totalPrice: parseInt(newPackage.totalPrice),
-            discountedPrice: parseInt(newPackage.discountedPrice),
-            duration: newPackage.duration,
-            courses: selectedCourseDetails,
-            totalCoursesPrice: totalCoursesPrice,
-            savings: savings,
-            createdBy: userId, // Add creator ID
-            createdAt: new Date().toISOString()
-        };
+        try {
+            const response = await axios.post("http://localhost:3001/api/packages", {
+                title: newPackage.title,
+                description: newPackage.description,
+                price: parseInt(newPackage.totalPrice), // assuming price is totalPrice
+                items: newPackage.selectedCourses // or whatever
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-        const updatedPackages = [...packages, createdPackage];
-        setPackages(updatedPackages);
-
-        // Save to localStorage with user-specific key
-        const userPackagesKey = `userPackages_${userId}`;
-        localStorage.setItem(userPackagesKey, JSON.stringify(updatedPackages));
-        console.log("✅ Package saved for user", userId);
-
-        setShowCreateModal(false);
-        setNewPackage({
-            title: '',
-            description: '',
-            totalPrice: '',
-            discountedPrice: '',
-            selectedCourses: [],
-            duration: ''
-        });
-
-        alert("✅ Course package created successfully!");
+            alert("✅ Package created successfully!");
+            setShowCreateModal(false);
+            setNewPackage({
+                title: '',
+                description: '',
+                totalPrice: '',
+                discountedPrice: '',
+                selectedCourses: [],
+                duration: ''
+            });
+            fetchPackages(); // Refresh list
+        } catch (error) {
+            console.error("Error creating package:", error);
+            alert("Error creating package");
+        }
     };
 
     const handleDeletePackage = (packageId) => {

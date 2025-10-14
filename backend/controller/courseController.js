@@ -3,6 +3,7 @@ const Asset = require("../models/asset");
 const Enrollment = require("../models/enrollment");
 const Payment = require('../models/payment');
 const User = require('../models/User');
+const Package = require('../models/package');
 const path = require("path");
 const fs = require("fs");
 const crypto = require('crypto');
@@ -611,5 +612,76 @@ exports.listEnrollmentsForCourse = async (req, res) => {
   } catch (err) {
     console.error('Error in listEnrollmentsForCourse:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Package Controllers
+exports.createPackage = async (req, res) => {
+  try {
+    const { title, description, price, items } = req.body;
+    const createdBy = req.user.id;
+
+    const newPackage = new Package({
+      title,
+      description,
+      price,
+      items,
+      createdBy
+    });
+
+    await newPackage.save();
+    res.status(201).json({ message: 'Package created successfully', package: newPackage });
+  } catch (error) {
+    console.error('Error creating package:', error);
+    res.status(500).json({ error: 'Error creating package' });
+  }
+};
+
+exports.getPackages = async (req, res) => {
+  try {
+    const packages = await Package.find({ createdBy: req.user.id });
+    res.status(200).json(packages);
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    res.status(500).json({ error: 'Error fetching packages' });
+  }
+};
+
+exports.updatePackage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const package = await Package.findOneAndUpdate(
+      { _id: id, createdBy: req.user.id },
+      updates,
+      { new: true }
+    );
+
+    if (!package) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    res.status(200).json({ message: 'Package updated successfully', package });
+  } catch (error) {
+    console.error('Error updating package:', error);
+    res.status(500).json({ error: 'Error updating package' });
+  }
+};
+
+exports.deletePackage = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const package = await Package.findOneAndDelete({ _id: id, createdBy: req.user.id });
+
+    if (!package) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    res.status(200).json({ message: 'Package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting package:', error);
+    res.status(500).json({ error: 'Error deleting package' });
   }
 };
