@@ -5,6 +5,7 @@ const courseController = require("../controller/courseController");
 const Course = require("../models/course"); // ⬅️ Import Course model
 const auth = require("../middleware/auth");
 const assetController = require("../controller/courseController");
+const questionController = require('../controller/questionController');
 
 // ✅ Upload Cover Image
 router.post("/upload-cover", upload.single("coverImage"), (req, res) => {
@@ -97,6 +98,11 @@ router.delete("/assets/:id", auth, assetController.deleteAsset);
 
 // Import assets into course
 router.post("/course/:id/import-assets", auth, courseController.importAssetsToCourse);
+
+// Question bank routes
+router.post('/questions', auth, questionController.createQuestion);
+router.get('/questions', auth, questionController.listQuestions);
+router.delete('/questions/:id', auth, questionController.deleteQuestion);
 
 // Enroll via link
 router.post("/course/:id/enroll", auth, courseController.enrollInCourse);

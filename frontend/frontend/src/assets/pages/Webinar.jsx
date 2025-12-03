@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../layout/Sidebar';
 import { Link, useNavigate } from "react-router-dom";
-import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaEye, FaCommentDots, FaCalendarAlt, FaVideo, FaClock } from "react-icons/fa";
+import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaCommentDots, FaCalendarAlt, FaVideo, FaClock, FaLink } from "react-icons/fa";
 
 export default function Webinar() {
     const [role, setRole] = useState(null);
     const [webinars, setWebinars] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const [toast, setToast] = useState({ visible: false, message: '' });
 
     useEffect(() => {
         // Get role from localStorage
@@ -86,6 +87,31 @@ export default function Webinar() {
         } catch (error) {
             console.error("Error decoding token:", error);
             return null;
+        }
+    };
+
+    const copyToClipboard = async (text) => {
+        try {
+            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                // fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            setToast({ visible: true, message: 'Link copied to clipboard' });
+            setTimeout(() => setToast({ visible: false, message: '' }), 2000);
+        } catch (err) {
+            console.error('Copy failed', err);
+            alert('Failed to copy link. You can manually copy: ' + text);
         }
     };
 
@@ -173,7 +199,7 @@ export default function Webinar() {
                             }
                         </p>
                         {role === "teacher" && (
-                            <Link to="/webinars/create">
+                            <Link to="/webinar/create">
                                 <button className="mt-4 bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700">
                                     + Create Your First Webinar
                                 </button>
@@ -257,10 +283,10 @@ export default function Webinar() {
                                             onClick={() => alert(`Webinar Attendance:\nWebinar: ${webinar.title}\nRegistered: ${webinar.registeredCount || 0}\nAttended: ${webinar.attendedCount || 0}\nNo-shows: ${(webinar.registeredCount || 0) - (webinar.attendedCount || 0)}`)}
                                             title="View Attendees"
                                         />
-                                        <FaEye
-                                            onClick={() => navigate(`/webinars/preview/${webinar._id}`)}
+                                        <FaLink
+                                            onClick={() => copyToClipboard(window.location.origin + `/webinars/preview/${webinar._id}`)}
                                             className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
-                                            title="Preview Webinar"
+                                            title="Copy webinar link"
                                         />
                                         <FaCommentDots
                                             className="text-gray-600 cursor-pointer hover:text-purple-600 transition"
@@ -302,6 +328,12 @@ export default function Webinar() {
                     </div>
                 )}
             </div>
+            {/* Toast */}
+            {toast.visible && (
+                <div className="fixed bottom-6 right-6 bg-black text-white px-4 py-2 rounded shadow-lg z-50">
+                    {toast.message}
+                </div>
+            )}
         </div>
     );
 }

@@ -4,6 +4,8 @@ const cors = require("cors");
 const path = require("path");
 const connectDB = require("./Connection/db");
 const User = require('./models/User');
+// ensure question model is registered
+require('./models/question');
 const bcrypt = require('bcryptjs');
 
 const userRoutes = require("./routes/userroutes");

@@ -9,8 +9,8 @@ export default function AssetLibraryImportModal({ onClose, onImport }) {
         const fetchAssets = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:3001/api/assets", {
-                    headers: { Authorization: `Bearer ${token}` },
+                const res = await axios.get(`/api/assets`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
                 setAssets(res.data || []);
             } catch (err) {
@@ -19,6 +19,16 @@ export default function AssetLibraryImportModal({ onClose, onImport }) {
         };
         fetchAssets();
     }, []);
+
+    const getFileUrl = (filePath) => {
+        if (!filePath) return filePath;
+        if (/^https?:\/\//i.test(filePath)) return filePath;
+        try {
+            return new URL(filePath, window.location.origin).toString();
+        } catch {
+            return `http://localhost:3001${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+        }
+    };
 
     const toggle = (id) => {
         const next = new Set(selected);
@@ -46,7 +56,7 @@ export default function AssetLibraryImportModal({ onClose, onImport }) {
                             <div className="text-sm font-medium truncate">{a.fileName}</div>
                             <div className="text-xs text-gray-500">{a.mimeType}</div>
                             <div className="mt-2 flex items-center justify-between">
-                                <a href={a.filePath} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">View</a>
+                                <a href={getFileUrl(a.filePath)} target="_blank" rel="noreferrer" className="text-blue-600 text-sm">View</a>
                                 <input type="checkbox" checked={selected.has(a._id)} onChange={() => toggle(a._id)} />
                             </div>
                         </div>

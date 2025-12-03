@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../layout/Sidebar';
 import axios from 'axios';
-import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaEye, FaCommentDots, FaPlus, FaTrash, FaBook } from "react-icons/fa";
+import { FaInfoCircle, FaWrench, FaPen, FaUsers, FaCommentDots, FaPlus, FaTrash, FaBook, FaLink } from "react-icons/fa";
 
 export default function Packages() {
     const [role, setRole] = useState(null);
     const [packages, setPackages] = useState([]);
     const [courses, setCourses] = useState([]);
+    const [toast, setToast] = useState({ visible: false, message: '' });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newPackage, setNewPackage] = useState({
         title: '',
@@ -41,8 +42,26 @@ export default function Packages() {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setPackages(response.data);
-            console.log("✅ Loaded", response.data.length, "packages from backend");
+            // Normalize package objects so UI can safely read fields like courses, savings, etc.
+            const raw = response.data || [];
+            const normalized = raw.map(p => ({
+                _id: p._id,
+                title: p.title || 'Untitled Package',
+                description: p.description || '',
+                totalPrice: p.totalPrice ?? p.price ?? 0,
+                discountedPrice: p.discountedPrice ?? p.price ?? 0,
+                duration: p.duration || 'N/A',
+                courses: Array.isArray(p.courses) ? p.courses : (Array.isArray(p.items) ? p.items : []),
+                savings: p.savings ?? ((p.totalPrice && p.discountedPrice) ? (p.totalPrice - p.discountedPrice) : 0),
+                createdAt: p.createdAt || p._createdAt || new Date().toISOString(),
+                enrolledStudents: p.enrolledStudents ?? 0,
+                rating: p.rating ?? null,
+                reviewCount: p.reviewCount ?? 0,
+                commentCount: p.commentCount ?? 0,
+            }));
+
+            setPackages(normalized);
+            console.log("✅ Loaded", normalized.length, "packages from backend", normalized);
         } catch (error) {
             console.error("Error fetching packages:", error);
             setPackages([]);
@@ -123,7 +142,7 @@ export default function Packages() {
         }
 
         try {
-            const response = await axios.post("http://localhost:3001/api/packages", {
+            await axios.post("http://localhost:3001/api/packages", {
                 title: newPackage.title,
                 description: newPackage.description,
                 price: parseInt(newPackage.totalPrice), // assuming price is totalPrice
@@ -183,6 +202,30 @@ export default function Packages() {
         alert("✅ Package deleted successfully!");
     };
 
+    const copyToClipboard = async (text) => {
+        try {
+            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            setToast({ visible: true, message: 'Link copied to clipboard' });
+            setTimeout(() => setToast({ visible: false, message: '' }), 2000);
+        } catch (err) {
+            console.error('Copy failed', err);
+            alert('Failed to copy link. You can manually copy: ' + text);
+        }
+    };
+
     const toggleCourseSelection = (courseId) => {
         const updatedSelection = newPackage.selectedCourses.includes(courseId)
             ? newPackage.selectedCourses.filter(id => id !== courseId)
@@ -208,6 +251,13 @@ export default function Packages() {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div>
+
+                        {/* Toast */}
+                        {toast.visible && (
+                            <div className="fixed bottom-6 right-6 bg-black text-white px-4 py-2 rounded shadow-lg z-50">
+                                {toast.message}
+                            </div>
+                        )}
                         <h2 className="text-2xl font-semibold">My Course Packages ({packages.length})</h2>
                         <p className="text-gray-600 mt-1">Bundle your created courses together and offer them at special pricing</p>
                     </div>
@@ -337,10 +387,10 @@ export default function Packages() {
                                                 onClick={() => alert(`Package Enrollment:\nPackage: ${pkg.title}\nEnrolled Students: ${pkg.enrolledStudents || 0}\nTotal Revenue: ₹${(pkg.enrolledStudents || 0) * pkg.discountedPrice}`)}
                                                 title="View Students"
                                             />
-                                            <FaEye
+                                            <FaLink
                                                 className="cursor-pointer hover:text-purple-600 transition"
-                                                onClick={() => alert(`Package Preview:\nTitle: ${pkg.title}\nPrice: ₹${pkg.discountedPrice} (Save ₹${pkg.savings})\nCourses: ${pkg.courses.map(c => c.title).join(', ')}`)}
-                                                title="Preview Package"
+                                                onClick={() => copyToClipboard(window.location.origin + `/packages/preview/${pkg._id}`)}
+                                                title="Copy package link"
                                             />
                                             <FaCommentDots
                                                 className="cursor-pointer hover:text-purple-600 transition"

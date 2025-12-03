@@ -6,11 +6,13 @@ export default function Navbar({ userType, variant = 'dark' }) {
   const [showJoin, setShowJoin] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const isLight = variant === 'light';
+  const isTeacher = (userType === 'teacher') || (typeof window !== 'undefined' && localStorage.getItem('role') === 'teacher');
   const navigate = useNavigate();
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const navClass = `w-full fixed top-0 left-0 z-50 backdrop-blur-md p-4 flex justify-between items-center ${isLight ? 'bg-white/90 shadow-md' : 'bg-white/10 shadow-sm'}`;
-  const logoClass = isLight ? 'text-xl font-bold text-gray-900' : 'text-xl font-bold text-gray-100';
-  const linkBase = isLight ? 'text-gray-800' : 'text-gray-200';
+  // If teacher, use a grey navbar for clear visual distinction
+  const navClass = `w-full fixed top-0 left-0 z-50 backdrop-blur-md p-4 flex justify-between items-center ${isTeacher ? 'bg-gray-100 shadow-md' : (isLight ? 'bg-white/90 shadow-md' : 'bg-white/10 shadow-sm')}`;
+  const logoClass = isTeacher ? 'text-xl font-bold text-gray-800' : (isLight ? 'text-xl font-bold text-gray-900' : 'text-xl font-bold text-gray-100');
+  const linkBase = isTeacher ? 'text-gray-700' : (isLight ? 'text-gray-800' : 'text-gray-200');
   const linkHover = 'hover:text-violet-600';
 
   return (

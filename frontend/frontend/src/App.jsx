@@ -17,6 +17,13 @@ import MyCourses from './assets/pages/MyCourses';
 import AdminLogin from './assets/pages/AdminLogin';
 import AdminDashboard from './assets/pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
+import AssetLibraryManage from './manage/AssetLibraryManage';
+import AssignmentsManage from './manage/Assignments';
+import DiscussionsManage from './manage/Discussions';
+import QuestionBank from './manage/QuestionBank';
+import QuizReviews from './manage/QuizReviews';
+import Ratings from './manage/Ratings';
+import WebinarsManage from './manage/Webinars';
 
 function ConditionalNavbar() {
   const location = useLocation();
@@ -77,6 +84,13 @@ function App() {
         <Route path="/course-content/:courseId" element={<CourseContent />} />
         <Route path="/courses/preview/:id" element={<CoursePreview />} />
         <Route path="/my-courses" element={<MyCourses />} />
+        <Route path="/asset-library" element={<AssetLibraryManage />} />
+        <Route path="/discussions" element={<DiscussionsManage />} />
+        <Route path="/question-bank" element={<QuestionBank />} />
+        <Route path="/quiz-reviews" element={<QuizReviews />} />
+        <Route path="/assignments" element={<AssignmentsManage />} />
+        <Route path="/ratings-reviews" element={<Ratings />} />
+        <Route path="/webinars/manage" element={<WebinarsManage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"

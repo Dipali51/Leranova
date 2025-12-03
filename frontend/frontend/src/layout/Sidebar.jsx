@@ -10,6 +10,29 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // helper to navigate and fallback to hard redirect if SPA navigation doesn't work
+  const navigateTo = (path) => {
+    try {
+      console.log('[Sidebar] navigateTo SPA ->', path);
+      navigate(path);
+      setShowManage(false);
+      // small fallback: if SPA navigation didn't change the URL (due to some overlay), force a full redirect
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname !== path) {
+          console.log('[Sidebar] SPA navigation did not update URL, falling back to full redirect ->', path);
+          window.location.href = path;
+        } else {
+          console.log('[Sidebar] SPA navigation succeeded, pathname=', window.location.pathname);
+        }
+      }, 80);
+    } catch (e) {
+      if (typeof window !== 'undefined') {
+        console.log('[Sidebar] navigateTo caught error, hard redirect ->', path);
+        window.location.href = path;
+      }
+    }
+  };
+
   // Get user role from localStorage (or backend)
   useEffect(() => {
     const savedRole = localStorage.getItem("role"); // 👈 store role at login
@@ -87,50 +110,18 @@ export default function Sidebar() {
         </li>
         {showManage && (
           <ul className="ml-8 space-y-5 text-black-500">
-            <li>Asset library</li>
-            <li>Discussions</li>
-            <li>Question bank</li>
-            <li>Quiz reviews</li>
-            <li>Assignments</li>
-            <li>Live tests</li>
-            <li>Live classes</li>
-            <li>Ratings & reviews</li>
-          </ul>
-        )}
-
-        {/* Users */}
-        <li className="flex items-center gap-3 px-3 py-2 cursor-pointer" onClick={() => setShowUsers(!showUsers)}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 21v-1.125a5.625 5.625 0 0111.25 0V21" />
-          </svg>
-          Users
-          <ChevronIcon open={showUsers} />
-        </li>
-        {showUsers && (
-          <ul className="ml-8 space-y-5 text-black-500">
-            <li>Learner</li>
-            <li>Admin</li>
-            <li>Instructor</li>
-            <li>Affiliates</li>
-            <li>Enquiries</li>
-          </ul>
-        )}
-
-        {/* Reports */}
-        <li className="flex items-center gap-3 px-3 py-2 cursor-pointer" onClick={() => setShowReports(!showReports)}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6m6 6V9m3-4.5H6a2.25 2.25 0 00-2.25 2.25v11.25A2.25 2.25 0 006 21h12a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0018 4.5z" />
-          </svg>
-          Reports
-          <ChevronIcon open={showReports} />
-        </li>
-        {showReports && (
-          <ul className="ml-8 space-y-5 text-black-500">
-            <li>Overview</li>
-            <li>Transactions</li>
-            <li>Settlement</li>
-            <li>Webinar</li>
+            <li>
+              <button onClick={() => navigateTo('/asset-library')} className="hover:text-indigo-600 text-left w-full">Asset library</button>
+            </li>
+            <li>
+              <button onClick={() => navigateTo('/question-bank')} className="hover:text-indigo-600 text-left w-full">Question bank</button>
+            </li>
+            <li>
+              <button onClick={() => navigateTo('/quiz-reviews')} className="hover:text-indigo-600 text-left w-full">Quiz reviews</button>
+            </li>
+            <li>
+              <button onClick={() => navigateTo('/assignments')} className="hover:text-indigo-600 text-left w-full">Assignments</button>
+            </li>
           </ul>
         )}
       </ul>
