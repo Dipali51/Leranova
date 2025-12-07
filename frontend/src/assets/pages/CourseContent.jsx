@@ -2,7 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import CourseSidebar from "../../layout/CourseSidebar";
 import AddManuallyModal from "../../components/AddManuallyModal";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import { useApi } from "../../hooks/useApi";
+import { useAuthStore } from "../../stores/authStore";
+import { API_ENDPOINTS } from "../../utils/constants";
+import { showToast } from "../../components/Toast";
+import { TOAST_TYPES } from "../../utils/constants";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function CourseContent() {
   const { courseId } = useParams();
@@ -12,15 +17,19 @@ export default function CourseContent() {
   const [showUpload, setShowUpload] = useState(false);
   const [editingChapterIndex, setEditingChapterIndex] = useState(null);
 
+  const { get, post } = useApi();
+  const { role } = useAuthStore();
+  const isTeacher = role === 'teacher';
+
   const fetchCourse = useCallback(async () => {
     if (!courseId) return;
     try {
-      const res = await axios.get(`http://localhost:3001/api/course/${courseId}`);
-      setCourse(res.data);
+      const data = await get(API_ENDPOINTS.COURSE(courseId), { showErrorToast: false });
+      setCourse(data);
     } catch (err) {
-      console.warn('Failed to fetch course', err);
+      // Error handled by useApi
     }
-  }, [courseId]);
+  }, [courseId, get]);
 
   useEffect(() => {
     fetchCourse();
@@ -28,17 +37,15 @@ export default function CourseContent() {
 
   const chapters = course?.chapters || [];
 
-  // determine role from localStorage to control edit UI
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  let isTeacher = false;
-  try {
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      isTeacher = payload?.role === 'teacher';
+  const handlePublish = async () => {
+    try {
+      await post(API_ENDPOINTS.PUBLISH_COURSE(courseId), {}, { showErrorToast: false });
+      showToast(TOAST_TYPES.SUCCESS, 'Course published successfully!');
+      fetchCourse();
+    } catch (error) {
+      showToast(TOAST_TYPES.ERROR, 'Failed to publish course');
     }
-  } catch (e) {
-    console.warn('Error parsing token', e);
-  }
+  };
 
   return (
     <div className="flex">
@@ -52,15 +59,24 @@ export default function CourseContent() {
             <div>
                   {isTeacher && (
                 <>
-                  <button onClick={() => { setEditingChapterIndex(activeChapter); setShowUpload(true); }} className="border px-3 py-1 rounded mr-2">Edit</button>
-                  <button onClick={async () => { try { const token = localStorage.getItem('token'); await axios.post(`http://localhost:3001/api/course/${courseId}/publish`, {}, { headers: { Authorization: token ? token : '' } }); fetchCourse(); alert('Course published'); } catch (e) { console.error(e); alert('Publish failed'); } }} className="border px-3 py-1 rounded">Publish</button>
+                  <button onClick={() => { setEditingChapterIndex(activeChapter); setShowUpload(true); }} className="btn-secondary mr-2">Edit</button>
+                  <button onClick={handlePublish} className="btn-primary">Publish</button>
                 </>
               )}
             </div>
           </div>
 
           {chapters.length === 0 ? (
-            <div className="p-8 border rounded text-center text-gray-500">No chapters uploaded yet.</div>
+            <div className="bg-white rounded-xl shadow-md p-12 text-center border-2 border-gray-200">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No chapters uploaded yet</h3>
+              <p className="text-gray-600 mb-6">Start building your course by adding chapters and content.</p>
+              {isTeacher && (
+                <button onClick={() => { setEditingChapterIndex(null); setShowUpload(true); }} className="btn-primary">
+                  Add First Chapter
+                </button>
+              )}
+            </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
@@ -147,9 +163,15 @@ function UploadChapterForm({ courseId, onClose, chapter, chapterId }) {
   const [notesFile, setNotesFile] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const editing = Boolean(chapterId);
+  const { put, post } = useApi();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!title.trim()) {
+      showToast(TOAST_TYPES.ERROR, 'Please enter a chapter title');
+      return;
+    }
+
     const form = new FormData();
     form.append('title', title);
     form.append('description', description);
@@ -158,17 +180,25 @@ function UploadChapterForm({ courseId, onClose, chapter, chapterId }) {
     if (notesFile) form.append('notes', notesFile);
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
       if (editing) {
-        await axios.put(`http://localhost:3001/api/course/${courseId}/chapter/${chapterId}`, form, { headers: { 'Content-Type': 'multipart/form-data', Authorization: token ? token : '' } });
+        await put(API_ENDPOINTS.UPDATE_CHAPTER(courseId, chapterId), form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          showErrorToast: false,
+        });
+        showToast(TOAST_TYPES.SUCCESS, 'Chapter updated successfully!');
       } else {
-        await axios.post(`http://localhost:3001/api/course/${courseId}/upload-chapter`, form, { headers: { 'Content-Type': 'multipart/form-data', Authorization: token ? token : '' } });
+        await post(API_ENDPOINTS.UPLOAD_CHAPTER(courseId), form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          showErrorToast: false,
+        });
+        showToast(TOAST_TYPES.SUCCESS, 'Chapter uploaded successfully!');
       }
       onClose && onClose();
     } catch (err) {
-      console.error('Upload chapter failed', err);
-      alert('Upload failed');
-    } finally { setLoading(false); }
+      showToast(TOAST_TYPES.ERROR, 'Failed to upload chapter');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -194,8 +224,11 @@ function UploadChapterForm({ courseId, onClose, chapter, chapterId }) {
         <input type="file" accept="application/pdf" onChange={(e) => setNotesFile(e.target.files[0])} />
       </div>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Cancel</button>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded">{loading ? 'Uploading...' : 'Upload'}</button>
+        <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+        <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2">
+          {loading ? <LoadingSpinner size="sm" /> : null}
+          {loading ? 'Uploading...' : editing ? 'Update Chapter' : 'Upload Chapter'}
+        </button>
       </div>
     </form>
   );

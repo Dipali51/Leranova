@@ -16,7 +16,11 @@ import CoursePreview from './assets/pages/CoursePreview';
 import MyCourses from './assets/pages/MyCourses';
 import AdminLogin from './assets/pages/AdminLogin';
 import AdminDashboard from './assets/pages/AdminDashboard';
-import ProtectedRoute from './components/ProtectedRoute'; // ✅ import
+import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastContainer } from './components/Toast';
+import { useAuthStore } from './stores/authStore';
 import AssetLibraryManage from './manage/AssetLibraryManage';
 import AssignmentsManage from './manage/Assignments';
 import DiscussionsManage from './manage/Discussions';
@@ -34,17 +38,19 @@ function ConditionalNavbar() {
     location.pathname === route || location.pathname.startsWith(route)
   );
 
-  // read role from localStorage so Navbar can render role-specific links
-  const userRole = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+  // read role from Zustand store
+  const role = useAuthStore((state) => state.role);
 
-  return !shouldHideNavbar ? <Navbar userType={userRole} /> : null;
+  return !shouldHideNavbar ? <Navbar userType={role} /> : null;
 }
 
 function App() {
   return (
-    <Router>
-      <ConditionalNavbar />
-      <Routes>
+    <ErrorBoundary>
+      <Router>
+        <ConditionalNavbar />
+        <ToastContainer />
+        <Routes>
         <Route path="/" element={<Landingpage />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Signin />} />
@@ -84,6 +90,14 @@ function App() {
         <Route path="/course-content/:courseId" element={<CourseContent />} />
         <Route path="/courses/preview/:id" element={<CoursePreview />} />
         <Route path="/my-courses" element={<MyCourses />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/asset-library" element={<AssetLibraryManage />} />
         <Route path="/discussions" element={<DiscussionsManage />} />
         <Route path="/question-bank" element={<QuestionBank />} />
@@ -100,8 +114,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

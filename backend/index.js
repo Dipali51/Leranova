@@ -21,8 +21,6 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
-connectDB();
-
 // Seed default admin user
 const seedAdmin = async () => {
   try {
@@ -47,7 +45,18 @@ const seedAdmin = async () => {
   }
 };
 
-seedAdmin();
+// Initialize database connection and seed admin
+const initializeApp = async () => {
+  const connected = await connectDB();
+  if (connected !== false) {
+    // Only seed admin if database connection was successful
+    await seedAdmin();
+  } else {
+    console.error('⚠️ Skipping admin seed due to database connection failure');
+  }
+};
+
+initializeApp();
 
 app.use("/api", userRoutes);
 app.use("/api", courseRoutes);

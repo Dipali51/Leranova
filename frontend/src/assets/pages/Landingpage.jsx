@@ -43,7 +43,21 @@ export default function Landingpage() {
             Turn your expertise into income. Upload courses, PDFs, webinars, and digital products. Build a vibrant learning community and earn from your content.
           </p>
 
-          {/* Hero CTAs removed (kept intentionally minimal) */}
+          {/* Hero CTAs */}
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <Link
+              to="/signup"
+              className="btn-primary text-center px-8 py-4 text-lg font-bold animate-pulse hover:animate-none"
+            >
+              Get Started Free →
+            </Link>
+            <Link
+              to="/login"
+              className="btn-secondary text-center px-8 py-4 text-lg font-bold"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
 
         {/* Right Hero Image */}
@@ -61,53 +75,77 @@ export default function Landingpage() {
       {/* Features Section */}
       <section className="py-20 bg-transparent relative z-10">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div className="p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 transition-all bg-gradient-to-br from-white/5 to-white/3 border border-white/10 backdrop-blur-sm">
-              <div className="mx-auto mb-4 w-20 h-20 flex items-center justify-center rounded-full bg-white/95 shadow">
-                <img src="https://img.icons8.com/color/96/000000/classroom.png" alt="Upload Courses" className="w-12 h-12" />
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Everything You Need to <span className="bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">Succeed</span>
+            </h2>
+            <p className="text-xl text-violet-200">Powerful features to help you teach, learn, and grow</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="group p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border-2 border-violet-400/30 backdrop-blur-sm">
+              <div className="mx-auto mb-6 w-24 h-24 flex items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg group-hover:shadow-2xl transition-shadow">
+                <span className="text-5xl">📚</span>
               </div>
-              <h3 className="text-2xl font-bold text-white">📚 Upload Courses</h3>
-              <p className="mt-4 text-gray-300">Host video lectures, PDFs, and quizzes in one place.</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Upload Courses</h3>
+              <p className="text-gray-300 leading-relaxed">Host video lectures, PDFs, assignments, and quizzes all in one place. Organize your content with chapters and modules.</p>
             </div>
-            <div className="p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 transition-all bg-gradient-to-br from-white/5 to-white/3 border border-white/10 backdrop-blur-sm">
-              <div className="mx-auto mb-4 w-20 h-20 flex items-center justify-center rounded-full bg-white/95 shadow">
-                <img src="https://img.icons8.com/color/96/000000/money-bag.png" alt="Monetize Content" className="w-12 h-12" />
+            
+            <div className="group p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-fuchsia-500/20 to-purple-500/20 border-2 border-fuchsia-400/30 backdrop-blur-sm">
+              <div className="mx-auto mb-6 w-24 h-24 flex items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-purple-500 shadow-lg group-hover:shadow-2xl transition-shadow">
+                <span className="text-5xl">💰</span>
               </div>
-              <h3 className="text-2xl font-bold text-white">💰 Monetize Content</h3>
-              <p className="mt-4 text-gray-300">Charge for access and grow your income effortlessly.</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Monetize Content</h3>
+              <p className="text-gray-300 leading-relaxed">Set your own prices, accept payments via Razorpay, and grow your income effortlessly. Free or paid courses - you decide.</p>
             </div>
-            <div className="p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 transition-all bg-gradient-to-br from-white/5 to-white/3 border border-white/10 backdrop-blur-sm">
-              <div className="mx-auto mb-4 w-20 h-20 flex items-center justify-center rounded-full bg-white/95 shadow">
-                <img src="https://img.icons8.com/color/96/000000/conference.png" alt="Build Community" className="w-12 h-12" />
+            
+            <div className="group p-8 rounded-2xl shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 bg-gradient-to-br from-purple-500/20 to-violet-500/20 border-2 border-purple-400/30 backdrop-blur-sm">
+              <div className="mx-auto mb-6 w-24 h-24 flex items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 shadow-lg group-hover:shadow-2xl transition-shadow">
+                <span className="text-5xl">🌍</span>
               </div>
-              <h3 className="text-2xl font-bold text-white">🌍 Build Community</h3>
-              <p className="mt-4 text-gray-300">Engage learners with discussions, webinars, and more.</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Build Community</h3>
+              <p className="text-gray-300 leading-relaxed">Engage learners with discussions, webinars, assignments, and interactive content. Create a thriving learning ecosystem.</p>
             </div>
           </div>
 
           {/* Testimonials */}
-          <div className="mt-12 bg-white/5 p-8 rounded-2xl shadow-lg backdrop-blur-sm">
-            <h4 className="text-xl font-semibold text-white mb-4">What instructors say</h4>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 p-4 bg-neutral-800 rounded-lg shadow-sm">
-                <div className="flex items-center gap-4">
-                  <img src="https://i.pravatar.cc/48?img=12" alt="avatar" className="w-12 h-12 rounded-full" />
+          <div className="mt-16">
+            <h4 className="text-3xl font-bold text-white mb-8 text-center">What Our Instructors Say</h4>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-6 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-2xl border-2 border-violet-400/30 backdrop-blur-sm hover:border-violet-400/50 transition-all">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold text-xl">
+                    RS
+                  </div>
                   <div>
-                    <div className="font-semibold text-white">Riya Sharma</div>
+                    <div className="font-bold text-white text-lg">Riya Sharma</div>
                     <div className="text-sm text-violet-300">Data Science Instructor</div>
                   </div>
                 </div>
-                <p className="mt-3 text-gray-300">"I launched my course in two weeks and started earning within a month. The platform handles everything smoothly."</p>
+                <p className="text-gray-200 leading-relaxed italic">"I launched my course in two weeks and started earning within a month. The platform handles everything smoothly - from payments to student management. Highly recommended!"</p>
+                <div className="mt-4 flex text-yellow-400">
+                  {"★★★★★".split("").map((star, i) => (
+                    <span key={i}>{star}</span>
+                  ))}
+                </div>
               </div>
-              <div className="flex-1 p-4 bg-neutral-800 rounded-lg shadow-sm">
-                <div className="flex items-center gap-4">
-                  <img src="https://i.pravatar.cc/48?img=32" alt="avatar" className="w-12 h-12 rounded-full" />
+              
+              <div className="p-6 bg-gradient-to-br from-fuchsia-500/20 to-purple-500/20 rounded-2xl border-2 border-fuchsia-400/30 backdrop-blur-sm hover:border-fuchsia-400/50 transition-all">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
+                    AP
+                  </div>
                   <div>
-                    <div className="font-semibold text-white">Amit Patel</div>
+                    <div className="font-bold text-white text-lg">Amit Patel</div>
                     <div className="text-sm text-violet-300">Design Coach</div>
                   </div>
                 </div>
-                <p className="mt-3 text-gray-300">"The payout workflow is clear and payouts reflect on time. Support is very responsive."</p>
+                <p className="text-gray-200 leading-relaxed italic">"The payout workflow is clear and payouts reflect on time. Support is very responsive. This platform has helped me turn my passion into a sustainable income stream."</p>
+                <div className="mt-4 flex text-yellow-400">
+                  {"★★★★★".split("").map((star, i) => (
+                    <span key={i}>{star}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -170,9 +208,60 @@ export default function Landingpage() {
         </div>
       </section>
 
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-to-r from-violet-600 to-fuchsia-600 relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Ready to Start Teaching?
+          </h2>
+          <p className="text-xl text-violet-100 mb-8">
+            Join thousands of instructors already earning on Learnova
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/signup"
+              className="bg-white text-violet-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105 shadow-xl"
+            >
+              Create Your Account →
+            </Link>
+            <Link
+              to="/login"
+              className="bg-violet-800 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-violet-900 transition transform hover:scale-105 border-2 border-white/30"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-10 bg-violet-900 text-violet-200 text-center relative z-10">
-        <p>© {new Date().getFullYear()} Learnova. All rights reserved.</p>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8 mb-8 text-left">
+            <div>
+              <h5 className="font-bold text-white mb-3">Learnova</h5>
+              <p className="text-sm">Empowering educators and learners across India. Build, teach, and earn from your knowledge.</p>
+            </div>
+            <div>
+              <h5 className="font-bold text-white mb-3">Quick Links</h5>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/" className="hover:text-white transition">Home</Link></li>
+                <li><Link to="/courses" className="hover:text-white transition">Browse Courses</Link></li>
+                <li><Link to="/signup" className="hover:text-white transition">Become an Instructor</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-bold text-white mb-3">Support</h5>
+              <ul className="space-y-2 text-sm">
+                <li>Email: <a href="mailto:hello@learnova.in" className="hover:text-white transition">hello@learnova.in</a></li>
+                <li>Hours: 10:30 AM - 06:00 PM (Mon-Sat)</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-violet-800 pt-6">
+            <p>© {new Date().getFullYear()} Learnova. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
