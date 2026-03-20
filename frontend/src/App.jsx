@@ -38,10 +38,13 @@ function ConditionalNavbar() {
     location.pathname === route || location.pathname.startsWith(route)
   );
 
+  const isLanding = location.pathname === '/';
+
   // read role from Zustand store
   const role = useAuthStore((state) => state.role);
 
-  return !shouldHideNavbar ? <Navbar userType={role} /> : null;
+  if (shouldHideNavbar) return null;
+  return <Navbar userType={role} landing={isLanding} />;
 }
 
 function App() {
@@ -51,69 +54,69 @@ function App() {
         <ConditionalNavbar />
         <ToastContainer />
         <Routes>
-        <Route path="/" element={<Landingpage />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Signin />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/webinar" element={<Webinar />} />
+          <Route path="/" element={<Landingpage />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Signin />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/packages" element={<Packages />} />
+          <Route path="/webinar" element={<Webinar />} />
 
-        <Route
-          path="/webinar/create"
-          element={
-            <ProtectedRoute role="teacher">
-              <CreateWebinar />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/webinar/create"
+            element={
+              <ProtectedRoute role="teacher">
+                <CreateWebinar />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/courses/create"
-          element={
-            <ProtectedRoute role="teacher">
-              <CreateCourse />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/courses/create"
+            element={
+              <ProtectedRoute role="teacher">
+                <CreateCourse />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/courses/edit/:id"
-          element={
-            <ProtectedRoute role="teacher">
-              <CreateCourse />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/courses/edit/:id"
+            element={
+              <ProtectedRoute role="teacher">
+                <CreateCourse />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="/add-content" element={<AddCourseContent />} />
-        <Route path="/course-content/:courseId" element={<CourseContent />} />
-        <Route path="/courses/preview/:id" element={<CoursePreview />} />
-        <Route path="/my-courses" element={<MyCourses />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/asset-library" element={<AssetLibraryManage />} />
-        <Route path="/discussions" element={<DiscussionsManage />} />
-        <Route path="/question-bank" element={<QuestionBank />} />
-        <Route path="/quiz-reviews" element={<QuizReviews />} />
-        <Route path="/assignments" element={<AssignmentsManage />} />
-        <Route path="/ratings-reviews" element={<Ratings />} />
-        <Route path="/webinars/manage" element={<WebinarsManage />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="/add-content" element={<AddCourseContent />} />
+          <Route path="/course-content/:courseId" element={<CourseContent />} />
+          <Route path="/courses/preview/:id" element={<CoursePreview />} />
+          <Route path="/my-courses" element={<MyCourses />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/asset-library" element={<AssetLibraryManage />} />
+          <Route path="/discussions" element={<DiscussionsManage />} />
+          <Route path="/question-bank" element={<QuestionBank />} />
+          <Route path="/quiz-reviews" element={<QuizReviews />} />
+          <Route path="/assignments" element={<AssignmentsManage />} />
+          <Route path="/ratings-reviews" element={<Ratings />} />
+          <Route path="/webinars/manage" element={<WebinarsManage />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </ErrorBoundary>

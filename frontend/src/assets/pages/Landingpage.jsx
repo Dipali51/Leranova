@@ -118,7 +118,7 @@ export default function Landingpage() {
                     RS
                   </div>
                   <div>
-                    <div className="font-bold text-white text-lg">Riya Sharma</div>
+                    <div className="font-bold text-white text-lg">krutika parte</div>
                     <div className="text-sm text-violet-300">Data Science Instructor</div>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export default function Landingpage() {
                     AP
                   </div>
                   <div>
-                    <div className="font-bold text-white text-lg">Amit Patel</div>
+                    <div className="font-bold text-white text-lg">Dipali Sharma</div>
                     <div className="text-sm text-violet-300">Design Coach</div>
                   </div>
                 </div>

@@ -31,34 +31,55 @@ export default function Webinar() {
 
                 console.log("🔄 Fetching webinars with token:", token.substring(0, 20) + "...");
 
-                // TODO: Replace with real API when backend webinar API is ready
-                /*
-                const res = await axios.get("http://localhost:3001/api/webinars", {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                });
-                setWebinars(res.data);
-                */
-
-                // For now, use localStorage to persist webinars (similar to packages)
                 const userId = getUserIdFromToken(token);
                 if (userId) {
-                    const userWebinarsKey = `userWebinars_${userId}`;
-                    const storedWebinars = localStorage.getItem(userWebinarsKey);
+                    const storedRole = localStorage.getItem('role');
 
-                    if (storedWebinars) {
-                        try {
-                            const parsedWebinars = JSON.parse(storedWebinars);
-                            setWebinars(parsedWebinars);
-                            console.log("✅ Loaded", parsedWebinars.length, "webinars for user", userId);
-                        } catch (error) {
-                            console.error("Error parsing stored webinars:", error);
+                    // If current user is a student, load only webinars they registered for.
+                    if (storedRole === 'student') {
+                        const regsKey = `webinarRegs_${userId}`;
+                        const registeredIds = JSON.parse(localStorage.getItem(regsKey) || '[]');
+
+                        if (!registeredIds || registeredIds.length === 0) {
                             setWebinars([]);
+                            console.log('📺 Student has no registered webinars', userId);
+                        } else {
+                            const found = [];
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const key = localStorage.key(i);
+                                if (!key) continue;
+                                if (key.startsWith('userWebinars_')) {
+                                    try {
+                                        const arr = JSON.parse(localStorage.getItem(key) || '[]');
+                                        (arr || []).forEach(w => {
+                                            if (registeredIds.includes(w._id)) found.push(w);
+                                        });
+                                    } catch (e) {
+                                        // ignore parse errors
+                                    }
+                                }
+                            }
+                            setWebinars(found);
+                            console.log('✅ Loaded', found.length, 'registered webinars for student', userId);
                         }
                     } else {
-                        setWebinars([]);
-                        console.log("📺 No webinars found for user", userId);
+                        // teacher / owner: load webinars created by this user
+                        const userWebinarsKey = `userWebinars_${userId}`;
+                        const storedWebinars = localStorage.getItem(userWebinarsKey);
+
+                        if (storedWebinars) {
+                            try {
+                                const parsedWebinars = JSON.parse(storedWebinars);
+                                setWebinars(parsedWebinars);
+                                console.log("✅ Loaded", parsedWebinars.length, "webinars for user", userId);
+                            } catch (error) {
+                                console.error("Error parsing stored webinars:", error);
+                                setWebinars([]);
+                            }
+                        } else {
+                            setWebinars([]);
+                            console.log("📺 No webinars found for user", userId);
+                        }
                     }
                 }
 
@@ -157,13 +178,25 @@ export default function Webinar() {
                 {/* Topbar */}
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">My Webinars ({webinars.length})</h2>
-                    {role === "teacher" && (
-                        <Link to="/webinar/create">
-                            <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2">
-                                <FaVideo /> Create Webinar
+                    <div className="flex items-center gap-3">
+                        {role === "student" && (
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="border px-4 py-2 rounded hover:bg-gray-100 text-gray-700"
+                                title="Go back"
+                            >
+                                ← Back
                             </button>
-                        </Link>
-                    )}
+                        )}
+
+                        {role === "teacher" && (
+                            <Link to="/webinar/create">
+                                <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2">
+                                    <FaVideo /> Create Webinar
+                                </button>
+                            </Link>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filter and Search */}
